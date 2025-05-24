@@ -1,0 +1,9 @@
+"0","# ggsave(), two things:"
+"0","# (1) saves most recent plot to specified location (default working directory)"
+"0","# (2) specify the width and height for reproducibility"
+"0","ggsave(filename = ""./plots/1-6-penguin-plot.png"")"
+"1","[38;5;254mSaving 7.29 x 4.5 in image[39m
+"
+"2","Warning:"
+"2"," [38;5;254mRemoved 2 rows containing missing values or values outside the scale range (`geom_point()`).[39m
+"

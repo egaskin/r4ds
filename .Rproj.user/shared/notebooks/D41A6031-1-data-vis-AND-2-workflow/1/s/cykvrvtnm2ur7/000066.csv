@@ -1,0 +1,8 @@
+"0","# 7. Create the two following stacked bar plots. Which question can you answer "
+"0","# with the first one? Which question can you answer with the second one?"
+"0","# Answer: "
+"0","# 1st plot answers: ""given an island, what's the % species breakdown?"""
+"0","# 2nd plot answers: ""given a species, what's the % island breakdown?"" or what"
+"0","# different islands does this species live on"
+"0","ggplot(penguins, aes(x = island, fill = species)) +"
+"0","  geom_bar(position = ""fill"")"

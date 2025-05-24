@@ -1,0 +1,7 @@
+"0","# 2. What do you need to change in the code above to save the plot as a "
+"0","# PDF instead of a PNG? How could you find out what types of image files would "
+"0","# work in ggsave()?"
+"0","# Answer: see ggsave below + use ?ggsave to see save formats"
+"0","ggsave(""./plots/1-6-1-1-mpg-plot.pdf"")"
+"1","[38;5;254mSaving 7.29 x 4.5 in image[39m
+"

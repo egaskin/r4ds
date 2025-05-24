@@ -1,0 +1,698 @@
+library(tidyverse)
+library(palmerpenguins)
+library(ggthemes)
+
+#######################################
+# 1.2.5 Exercises
+# 1. How many rows are in penguins? How many columns?
+# Answer: 344 rows (observations), 8 columns (variables)
+dimensions = dim(penguins)
+num_rows <- dimensions[1]
+num_cols <- dimensions[2]
+print(c(num_rows,num_cols))
+
+
+# 2. What does the bill_depth_mm variable in the penguins data frame describe? Read the help for ?penguins to find out.
+# Answer: a number denoting bill depth (millimeters)
+?penguins
+
+
+# 3. Make a scatterplot of bill_depth_mm vs. bill_length_mm. That is, 
+# make a scatterplot with bill_depth_mm on the y-axis and bill_length_mm on the 
+# x-axis. Describe the relationship between these two variables.
+# Answer: Based on the plot made from below, there seems to be a positive lightly
+# linear relationship between bill depth and bill length
+ggplot(
+  data = penguins,
+  mapping = aes(x=bill_length_mm,y=bill_depth_mm),
+) +
+  geom_point(mapping = aes(color=species,shape=species))
+
+
+# 4. What happens if you make a scatterplot of species vs. bill_depth_mm? What 
+# might be a better choice of geom?
+# Answer: Based on scatter plot, probably a histogram colored by species (or 3 
+# separate histograms). I found the bar plot to be unhelpful.
+
+# scatter plot
+ggplot(
+  data = penguins,
+  mapping = aes(y=bill_depth_mm,x=species),
+) +
+  geom_point()
+
+# bar plot: im not sure how to interpret the height of the bar tbh
+ggplot(
+  data = penguins,
+  mapping = aes(y=bill_depth_mm,x=species),
+) +
+  geom_col() # NOT geom_bar(), geom_bar() only takes x OR y (not both) and 
+  # attempts to count each of x. this
+
+# naive histogram: this kinda sucks to but is better than bar plot
+ggplot(
+  data = penguins,
+  mapping = aes(y=bill_depth_mm),
+) +
+  geom_histogram(mapping=aes(color=species))
+
+# multi group histogram: much better, thanks to:
+# https://r-graph-gallery.com/histogram_several_group.html
+ggplot(
+  data = penguins,
+  mapping = aes(x=bill_depth_mm, fill = species),
+) +
+  geom_histogram( color="#e9ecef", alpha=0.6, position = 'identity') +
+  scale_fill_manual(values=c("#69b3a2", "#404080","#b3697a")) +
+  labs(fill="")
+
+# 5. Why does the following give an error and how would you fix it?
+# Answer: x and y have not been assigned, so ggplot doesn't know to plot from
+# the penguins dataframe. Need to add mapping with aesthetics to some var/obs.
+ggplot(
+  data = penguins,
+  mapping = aes(x=bill_length_mm,y=body_mass_g)
+  ) + 
+  geom_point()
+
+# 6. What does the na.rm argument do in geom_point()? What is the default value 
+# of the argument? Create a scatterplot where you successfully use this argument 
+# set to TRUE.
+# Answer: na.rm is a boolean used to specify to remove missing values silently
+ggplot(
+  data = penguins,
+  mapping = aes(x=bill_length_mm,y=body_mass_g)
+) + 
+  geom_point(na.rm=TRUE) + 
+  labs(caption = "Data come from the palmerpenguins package")
+
+# 7. Add the following caption to the plot you made in the previous exercise: 
+# “Data come from the palmerpenguins package.” 
+# Hint: Take a look at the documentation for labs().
+# Answer: see plot above
+
+# 8. Recreate the following visualization. What aesthetic should bill_depth_mm 
+# be mapped to? And should it be mapped at the global level or at geom level?
+# Answer: see plot below. bill_depth_mm should be mapped to color aesthetic and
+# at the geom_level so there is one curve.
+ggplot(
+  data = penguins,
+  mapping = aes(x=flipper_length_mm,y=body_mass_g)
+) +
+  geom_point(mapping=aes(color=bill_depth_mm)) + 
+  geom_smooth()
+
+# 9. Run code below in your head and predict what the output will look like. 
+# Then, run the code in R and check your predictions.
+ggplot(
+  data = penguins,
+  mapping = aes(x = flipper_length_mm, y = body_mass_g, color = island)
+) +
+  geom_point() +
+  geom_smooth(se = FALSE)
+
+# 10. Run code below in your head. Will these two graphs look different? And
+# why/why not?
+# Answer: they will not look different. color wasn't specified so there is no 
+# grouping differences between the 1st version (global defining x and y) and 
+# 2nd version (locally defining x and y redundantly for both "geom_")
+ggplot(
+  data = penguins,
+  mapping = aes(x = flipper_length_mm, y = body_mass_g)
+) +
+  geom_point() +
+  geom_smooth()
+
+ggplot() +
+  geom_point(
+    data = penguins,
+    mapping = aes(x = flipper_length_mm, y = body_mass_g)
+  ) +
+  geom_smooth(
+    data = penguins,
+    mapping = aes(x = flipper_length_mm, y = body_mass_g)
+  )
+
+#######################################
+# 1.4.3 Exercises
+# 1. Make a bar plot of species of penguins, where you assign species to the y 
+# aesthetic. How is this plot different?
+# Answer: the bars are horizontal! perpendicular to y-axis
+ggplot(penguins,aes(y=species))+
+  geom_bar()
+
+# 2. How are the following two plots different? Which aesthetic, color or fill, 
+# is more useful for changing the color of bars?
+# Answer: fill achieves a more drastic color change, but I guess depends on 
+# what you intended.
+ggplot(penguins, aes(x = species)) +
+  geom_bar(color = "red")
+
+ggplot(penguins, aes(x = species)) +
+  geom_bar(fill = "red")
+
+# 3. What does the bins argument in geom_histogram() do?
+# Answer: bins controls the number of bins, but is overridden by binwidth arg
+
+# 4. Make a histogram of the carat variable in the diamonds dataset that is 
+# available when you load the tidyverse package. Experiment with different 
+# binwidths. What binwidth reveals the most interesting patterns?
+# Answer: binwidth 0.5 seems to have a good number of bars to reveal patterns
+head(diamonds)
+# boxplot(x=diamonds["carat"],y=diamonds["color"])
+ggplot(diamonds,aes(y=carat,x=color))+
+  geom_boxplot()
+test_binwidths = c(0.125/2,0.125, 0.25, 0.5, 0.75,1)[6:1]
+for (i in test_binwidths){
+  print(i)
+  p_i <- ggplot(diamonds,aes(x=carat))+
+    geom_histogram(binwidth = i)+
+    labs(
+      title = paste("Diamond Carat Histogram for Binwidth",i),
+    ) 
+  print(p_i)
+}
+
+#######################################
+# 1.5.5 Exercises
+# 1. The mpg data frame that is bundled with the ggplot2 package contains 234 
+# observations collected by the US Environmental Protection Agency on 38 car 
+# models. Which variables in mpg are categorical? Which variables are numerical? 
+# (Hint: Type ?mpg to read the documentation for the dataset.) How can you see 
+# this information when you run mpg?
+# Answer: attempting to use the logic 'if bar plot makes sense' then maybe 
+# categorical + 'does it make sense to add, subtract, and/or average with this 
+# after reading ?mpg description' then maybe numerical, we have the following:
+# numerical vars = {cty,hwy}, since makes sense to add/average/subtract these
+# categorical vars = 
+# {manufacturer, model, displ, year, cyl, trans, drv, fl, class} since does not
+# make sense to add/average/subtract these (except averaging for years, I guess)
+
+View(mpg)
+
+# NOTE: "BREAKS" BECAUSE names() function returns strings, but need actual name, 
+# NOT string
+for (name in names(mpg)){
+  print(name)
+  p = ggplot(data=mpg,mapping=aes(x=name,))+
+    geom_bar()
+  print(p)
+}
+
+# NOTE: THIS WORKS! have to use format ".df[[col_name]]" if data = dataframe
+# alternatively within a function(df,col) use curly
+for (name in names(mpg)){
+  print(name)
+  p = ggplot(data=mpg,mapping=aes(x=.data[[name]],))+
+    geom_bar()
+  print(p)
+}
+
+# 2. Make a scatterplot of hwy vs. displ using the mpg data frame. Next, map a 
+# third, numerical variable to color, then size, then both color and size, then 
+# shape. How do these aesthetics behave differently for categorical vs. numerical 
+# variables?
+# Answer: color works well for both numerical and categorical - the colors can 
+# be assigned on a continuous gradient or discrete scale respectively. but, 
+# size doesn't seem to work very well for categorical or categorical-like vars
+# such as cyl - in fact size throws a warning "Using size for a discrete 
+# variable is not advised." Being able to interpolate between sizes is intuitive
+# which is lost for discrete vars.
+
+ggplot(mpg,aes(x=displ,y=hwy))+
+  geom_point()
+
+# numerical to color
+ggplot(mpg,aes(x=displ,y=hwy,color=cty))+
+  geom_point()
+
+ggplot(mpg,aes(x=displ,y=hwy,color=cyl))+
+  geom_point() # does cyl count as numerical?
+
+# numerical to size
+ggplot(mpg,aes(x=displ,y=hwy,size=cty))+
+  geom_point()
+
+ggplot(mpg,aes(x=displ,y=hwy,size=cyl))+
+  geom_point()
+
+# numerical to color and size
+ggplot(mpg,aes(x=displ,y=hwy,color=cty,size=cyl))+
+  geom_point()
+
+# WINNER WINNER WINNER imo
+# you can see the clear patttern that as city gas mileage increases so does
+# hwy. cyl by color also reveals 3 distinct groupings and a trend:
+# more cylinders comes with more displacement but worse gas mileage
+ggplot(mpg,aes(x=displ,y=hwy,color=cyl,size=cty))+
+  geom_point()
+
+# 3. In the scatterplot of hwy vs. displ, what happens if you map a third variable 
+# to linewidth?
+# Answer: scatter plots by themselves do not have lines (unless you overlay with
+# a smoothing function), so linewidth does nothing no matter the variable.
+ggplot(mpg,aes(x=displ,y=hwy,color=cyl,size=cty,linewidth=year))+
+  geom_point()
+
+# 4. What happens if you map the same variable to multiple aesthetics?
+# Answer: The variable's relationship to other variable is displayed in multiple
+# ways.
+ggplot(mpg,aes(x=displ,y=cty,color=cty,size=cty))+
+  geom_point()
+
+# 5. Make a scatterplot of bill_depth_mm vs. bill_length_mm and color the points 
+# by species. What does adding coloring by species reveal about the relationship 
+# between these two variables? What about faceting by species?
+# Answer: Coloring by species shows that for bill_depth_mm vs bill_length_mm,
+# different linear relationships exist depending on species. Facet also reveals
+# the same thing
+ggplot(penguins,aes(x=bill_length_mm, y=bill_depth_mm, color=species))+
+  geom_point()
+
+ggplot(penguins,aes(x=bill_length_mm, y=bill_depth_mm, color=species))+
+  geom_point()+
+  facet_wrap(~species)
+
+# 6. Why does the following yield two separate legends? How would you fix it to 
+# combine the two legends?
+ggplot(
+  data = penguins,
+  mapping = aes(
+    x = bill_length_mm, y = bill_depth_mm, 
+    color = species, shape = species
+  )
+) +
+  geom_point() +
+  labs(color = "Species",
+       shape = "Species") # ADD: shape = "Species"
+
+# 7. Create the two following stacked bar plots. Which question can you answer 
+# with the first one? Which question can you answer with the second one?
+# Answer: 
+# 1st plot answers: "given an island, what's the % species breakdown?"
+# 2nd plot answers: "given a species, what's the % island breakdown?" or what
+# different islands does this species live on
+ggplot(penguins, aes(x = island, fill = species)) +
+  geom_bar(position = "fill")
+ggplot(penguins, aes(x = species, fill = island)) +
+  geom_bar(position = "fill")
+#######################################
+# 1.6.1 Exercises
+
+# 1. Run the following lines of code. Which of the two plots is saved as 
+# mpg-plot.png? Why?
+# Answer: the 2nd once, since it is the most recent plot
+ggplot(mpg, aes(x = class)) +
+  geom_bar()
+ggplot(mpg, aes(x = cty, y = hwy)) +
+  geom_point()
+ggsave("./code/whole-game/mpg-plot.png")
+
+# 2. What do you need to change in the code above to save the plot as a 
+# PDF instead of a PNG? How could you find out what types of image files would 
+# work in ggsave()?
+# Answer: see ggsave below + use ?ggsave to see save formats
+ggsave("./code/whole-game/mpg-plot.pdf")
+
+#######################################
+# 2.5 exercises
+# 0. bonus code that didn't belong in its own file
+seq(1,10) # creates a integer sequence from 1 to 10
+
+# 1. Why does this code not work?
+
+my_variable <- 10
+tryCatch({my_varıable},
+         error=function(e){
+           cat("Caught Error!",conditionMessage(e),
+               "since this should have an i not dotless ı \n")
+         }
+         )
+# 2. Tweak each of the following R commands so that they run correctly:
+library(tidyverse)
+
+ggplot(data = mpg) + 
+  geom_point(mapping = aes(x = displ,y = hwy)) +
+  geom_smooth(method = "lm",aes(x = displ,y = hwy))
+
+# 3. Press Option + Shift + K / Alt + Shift + K. What happens? How can you get 
+# to the same place using the menus?
+# Answer: Opens the keyboard shortcuts! Same as Help > Keyboard Shortcuts Help
+
+# 4. Let’s revisit an exercise from the Section 1.6. Run the following lines of 
+# code. Which of the two plots is saved as mpg-plot.png? Why?
+# Answer: the bar plot will, since we have assigned the plot to an object and 
+# are specifically printing this object.
+my_bar_plot <- ggplot(mpg, aes(x = class)) +
+  geom_bar()
+my_scatter_plot <- ggplot(mpg, aes(x = cty, y = hwy)) +
+  geom_point()
+ggsave(filename = "./code/whole-game/mpg-plot.png", plot = my_bar_plot)
+
+#######################################
+# 3.2.5 Exercises
+library(nycflights13)
+
+# 1. In a single pipeline for each condition, find all flights that meet the 
+# condition:
+  # Had an arrival delay of two or more hours
+  # Flew to Houston (IAH or HOU)
+  # Were operated by United, American, or Delta
+  # Departed in summer (July, August, and September)
+  # Arrived more than two hours late but didn’t leave late
+  # Were delayed by at least an hour, but made up over 30 minutes in flight
+
+# we could split this into multiple filters, but i dont feel like it
+# the last condition conflicts with the 2nd to last condition though, so
+# i did that one by itself
+flights |>
+  filter(arr_delay >= 2*60 &
+         dest %in% c("IAH","HOU") &
+         carrier %in% c("UA","AA","DL") &
+         month %in% c(7,8,9) &
+         dep_delay <= 0 &
+         arr_delay >= 2*60
+  )
+
+# Were delayed by at least an hour, but made up over 30 minutes in flight
+# delayed part is easy, make sure dep_delay column >= 1 hr.
+# made up over 30 min in flight can be done in a couple ways:
+  # (1) arr_time - sched_arr_time <= 30 WITH dep_delay >= 60 min
+  # (2) arr_delay <= 30 WITH dep_delay >= 60 min
+last_condition <- flights |>
+                    filter(dep_delay >= 1*60 & arr_delay <= 30)
+last_condition
+View(last_condition)
+max(last_condition["arr_delay"]) >= 30 # TRUE
+
+# 2. Sort flights to find the flights with the longest departure delays. Find 
+# the flights that left earliest in the morning.
+# Answer: see longest_dep_delay and earliest below for 10 longest/shortest
+
+# desc() for descending!
+longest_dep_delay <- 
+  flights |> 
+    arrange(desc(dep_delay)) 
+
+longest_dep_delay[1:10,c("flight","dep_delay")]
+
+earliest_dep_time <-
+  flights |>
+    arrange(dep_time)
+
+earliest_dep_time[1:10,c("flight","dep_time")]
+
+# 3. Sort flights to find the fastest flights. (Hint: Try including a math 
+# calculation inside of your function.)
+# my original answer was a little more tedious using $ notation, this answer is 
+# inspired by (and the same as)
+# https://mine-cetinkaya-rundel.github.io/r4ds-solutions/data-transform.html
+# Answer:
+fastest_flights <-
+  flights |>
+    mutate(speed = distance/air_time) |>
+    arrange(desc(speed)) |>
+    relocate(speed)
+
+fastest_flights
+
+# 4. Was there a flight on every day of 2013?
+# Answer: Yes! See below.
+
+# the number of rows equals how many unique days of 2013 had a flight
+unique_month_day_pairs <- 
+  flights |>
+    distinct(month,day) |>
+    nrow()
+
+dim(unique_month_day_pairs)[1] == 365
+
+# alternatively:
+flights |>
+  distinct(month,day) |>
+  nrow() ==
+  365
+
+# 5. Which flights traveled the farthest distance? Which traveled the least 
+# distance?
+# Answer: see below, 1 flight went 17 mi for the shortest distance, and
+# 342 flights went 4983 mi for the longest distance
+
+# old way
+# distance_sorted_flights <-
+#   flights |>
+#     arrange(distance) |>
+#     relocate(distance)
+
+# new way, to get number of flights meeting the distance
+distance_sorted_flights <-
+    flights |>
+    count(distance) |>
+    arrange(distance)
+
+# least distance, top 10
+distance_sorted_flights[1,1:2]
+
+# furthest distance, top 10
+# negative indexing to exclude everything except last
+end_exclude_idx <- dim(distance_sorted_flights)[1]-1
+distance_sorted_flights[-1:-end_exclude_idx,1:2]
+
+# 6. Does it matter what order you used filter() and arrange() if you’re using 
+# both? Why/why not? Think about the results and how much work the functions 
+# would have to do.
+# Answer: Yes, the order matters for the amount of work that will be done. 
+# Both arrange() and filter() will have to see 
+# every row of input dataframe. if we arrange() then filter() this will require 
+# seeing every element of original dataframe twice. if we filter() then 
+# arrange(), we will only have to arrange the elements that were filtered out, 
+# which will typically be less than the number of elements in the dataframe 
+# which typically will mean seeing each element less than two times. Order of 
+# arrange() and filter() will NOT affect the results though (assuming filter()
+# does not change the order of the output of arrange())
+
+#######################################
+# 3.2.5 Exercises
+# 1. Compare dep_time, sched_dep_time, and dep_delay. How would you expect those 
+# three numbers to be related?
+# Answer: "sched_dep_time + dep_delay = dep_time" is my original answer, but
+# this reveals that 594=600-6 instead of 554. This is because 5:54am is 6 
+# minutes before 6:00am. We need to deal with the time format.
+# NOTE: that b/c of different time zones we cannot easily compare times of 
+# arrivals and departures.
+
+
+# VERSION 2:
+
+add_interval_to_times_col <-function(times_col,interval_col){
+  
+  make_military_time_leading_0 <-function(flights_time_col){
+    needs_leading_0 <- flights_time_col < 1000
+    col_with_leading_0 <- as.character(flights_time_col)
+    col_with_leading_0[needs_leading_0] <- 
+      paste0("0",col_with_leading_0[needs_leading_0])
+    
+    # note that the column is now STRINGS
+    col_with_leading_0
+  }
+  
+  make_minutes_leading_0 <-function(some_int_col){
+    # use which() to ignore NAs
+    needs_leading_0 <- which(some_int_col < 10)
+    col_with_leading_0 <- as.character(some_int_col)
+    col_with_leading_0[needs_leading_0] <- 
+      paste0("0",col_with_leading_0[needs_leading_0])
+    
+    # note that the column is now STRINGS
+    col_with_leading_0
+  }
+    
+  get_hr_from_min <- function(n){
+    return(abs(n) %/% 60)
+  }
+  
+  get_min_from_min_after_hr_removed <- function(n){
+    abs(n) %% 60
+  }
+  
+  check_positive <- function(n){
+    # get TRUE if positive, FALSE if negative
+    # then convert to integers by doing arithmetic
+    # 1 if positive, 2 if negative. for the lookup table of
+    # convert_to_plus1_minus1.
+    (n > 0) + 1 
+  }
+  
+  convert_to_plus1_minus1 <- function(n){
+    lookup = c(-1,1)
+    lookup[n]
+  }
+  
+  # add a leading zero (string column now)
+  times_with_leading_0 <- make_military_time_leading_0(times_col)
+  
+  # these are integers
+  interval_min <- get_min_from_min_after_hr_removed(interval_col)
+  interval_hr <- get_hr_from_min(interval_col)
+  interval_sign <- convert_to_plus1_minus1(check_positive(interval_col))
+  times_hr <- as.integer(substr(times_with_leading_0,1,2))
+  times_min <- as.integer(substr(times_with_leading_0,3,4))
+  
+  # print("times_with_leading_0[1:17]")
+  # print(times_with_leading_0[1:17])
+  # print("interval_col[1:17]")
+  # print(interval_col[1:17])
+  # print("times_min[1:17]")
+  # print(times_min[1:17])
+  # print("times_hr[1:17]")
+  # print(times_hr[1:17])
+  
+  
+  # increment the military time minutes and get the potential extra hours
+  times_min <- times_min + interval_min*interval_sign
+  extra_hr <- times_min %/% 60 # integer division
+  times_min <- times_min %% 60 # modulus/remainder operation
+  
+  # increment the military time hours
+  times_hr <- (times_hr + interval_hr*interval_sign + extra_hr) %% 24
+  
+  # convert both to strings, combine them, then convert back to int
+  times_with_leading_0 <- paste0(as.character(times_hr),
+                                 make_minutes_leading_0(times_min))
+  
+  # convert to integer to be in the HHMM or HMM format
+  times_with_leading_0 <- as.integer(times_with_leading_0)
+  
+  # final cleanup step. when n %% 24 = 0, this should actually be 2400 (i.e.
+  # should be 12am not 0am)
+  find_0 <- times_with_leading_0 == 0
+  
+  # print("find_0")
+  # print(find_0)
+  # print("times_with_leading_0")
+  # print(times_with_leading_0)
+  
+  times_with_leading_0[find_0] <- 2400
+  
+  times_with_leading_0
+}
+
+#### start: test cases for add_interval_to_times_col()
+# note: test cases 12 and 14 show that if the final times_min minutes is a single
+# digit integer (<10), appending this to the hour portion will result in 
+# incorrectly formatted time. For example, if times_min = 6, and times_hr = 4
+# then the final answer would be 46 instead of 406.
+test_q1 = select(flights,dep_time:dep_delay)[1:10,]
+new_rows <- tibble(dep_time = c(1417,600,559,406,2400,2400,2400),
+                   sched_dep_time = c(1835,600,559,406,2359,2250,1700),
+                   dep_delay = c(19*60 + 42,0,0,0,1,70,420))
+
+test_q1 <- bind_rows(test_q1,new_rows)
+test_q1
+
+add_interval_to_times_col(test_q1$sched_dep_time,
+                          test_q1$dep_delay)
+
+flights_na_counts <- colSums(is.na(flights))
+# flights_na_counts
+flights_na_counts[flights_na_counts > 0]
+
+#### end: test cases for add_interval_to_times_col() 
+
+flights_q1 <- # flights question 1
+  flights |>
+    select(dep_time:dep_delay) |>
+    # if had a filter() step, use .data$ NOT flights$
+    mutate(sum_sched_dep_time_plus_dep_delay = 
+           add_interval_to_times_col(.data$sched_dep_time, 
+                                     .data$dep_delay),
+           .before = 1
+           )
+
+flights_q1_na_counts <- colSums(is.na(flights_q1))
+flights_q1_na_counts[flights_q1_na_counts > 0]
+
+flights_q1_clean <- flights_q1 %>%
+  filter(
+    !is.na(dep_time),
+    !is.na(dep_delay),
+    !is.na(sched_dep_time)
+  )
+
+flights_clean <- flights |>
+  filter(
+    !is.na(dep_time),
+    !is.na(dep_delay),
+    !is.na(sched_dep_time)
+  )
+
+flights_clean_na_counts <- colSums(is.na(flights_clean))
+flights_clean_na_counts[flights_clean_na_counts > 0]
+
+flights_q1_clean_na_counts <- colSums(is.na(flights_q1_clean))
+flights_q1_clean_na_counts[flights_q1_clean_na_counts > 0]
+
+# flights_q1_clean[flights_q1_clean$sum_sched_dep_time_plus_dep_delay != flights_clean$dep_time,]
+# reveals the bad rows!   
+print( n = 29,
+flights_q1_clean[flights_q1_clean$sum_sched_dep_time_plus_dep_delay != flights_clean$dep_time,]
+)
+
+# VERSION 1:
+# DOESNT WORK BECAUSE e.g. 530 = 5:30 am. can't simply add: 530+65=595.
+# df <-
+# flights |>
+#   select(dep_time:dep_delay) |>
+#   mutate(sum_dep_sched_plus_delay = sched_dep_time + minutes(dep_delay),
+#          .before = 1)
+# df
+
+# 2. Brainstorm as many ways as possible to select dep_time, dep_delay, arr_time, 
+# and arr_delay from flights.
+# Answer: Assuming a single select statement used without other column verbs 
+# (otherwise very many possibilities). select(flights, INSERT_HERE)
+# INSERT_HERE = 
+select(flights,dep_time, dep_delay, arr_time, arr_delay)
+select(flights,c(4,6,7,9))
+select(-1:-3,-5,-8,-10:-ncol(flights)) # EQUIVALENT -c(1:3,5,8,10:ncol(flights))
+select(flights,all_of(c("dep_time", "dep_delay", "arr_time", "arr_delay")))
+select(flights,any_of(c("dep_time", "dep_delay", "arr_time", "arr_delay")))
+select(flights,! any_of(c("year", "month", "day", "sched_dep_time", 
+                          "sched_arr_time", "carrier", "flight", "tailnum", 
+                          'origin', "dest", "air_time", "distance", "hour", 
+                          "minute", "time_hour")))
+
+# 3. What happens if you specify the name of the same variable multiple times in a 
+# select() call?
+# Answer: It seems only the first time its specified matters, the rest are 
+# ignored. Note: we also learned that select can reorder the columns into the
+# order we select them in.
+
+flights |> select(dep_time,dep_time,year,year,year,dep_time)
+
+# 4. What does the any_of() function do? Why might it be helpful in conjunction 
+# with this vector?
+# Answer: select(df, any_of()) selects from df any column whose name matches a 
+# string from the vector, and ignores names not present
+variables <- c("year", "month", "day", "dep_delay", "arr_delay", "DUMMY")
+flights |> select(any_of(variables))
+
+# 5. Does the result of running the following code surprise you? How do the 
+# select helpers deal with upper and lower case by default? How can you change 
+# that default?
+# Answer: Yes, I am surprised. The select helpers seem to ignore case.
+flights |> select(contains("TiMe"))
+
+# 6. Rename air_time to air_time_min to indicate units of measurement and move 
+# it to the beginning of the data frame.
+# Answer: see below.
+flights |> 
+  rename(air_time_min = air_time) |>
+  relocate(air_time_min)
+
+# 7. Why doesn’t the following work, and what does the error mean?
+# Answer: select ONLY returns selected columns in new dataframe, so add 
+# arr_delay to select statement
+flights |>
+  select(tailnum, arr_delay) |> 
+  arrange(arr_delay)

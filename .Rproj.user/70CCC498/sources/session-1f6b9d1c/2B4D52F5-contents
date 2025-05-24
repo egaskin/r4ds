@@ -1,0 +1,127 @@
+---
+output:
+  pdf_document: default
+  html_document: default
+editor_options: 
+  markdown: 
+    wrap: 72
+---
+
+# r4ds notes
+
+## Introduction
+
+### What we will learn
+
+![data science modeling process visual (Figure
+1)](https://r4ds.hadley.nz/diagrams/data-science/base.png)
+
+steps of data science: 1. wrangling: fighting data into desired format
+via tidy + transform - tidy = giving consistent structure to data,
+usually each column is variable and row is observation - transform = -
+filtering for observations of interest - creating new variables that are
+functions of existing variables - calculating summary statistics 2.
+visualization: good visuals reveal new things, raise new questions, hint
+at whether your wrong/right, and hint about if more data is needed -
+visuals aren't scalable, they require humans to interpret 3. model:
+mathematical or computational tool for answering precise questions -
+complementary tools to visualizing once questions have been made precise
+4. communication: models and visualizations are USELESS unless we can
+communicate results to others
+
+### What we won't learn
+
+-   modeling in great depth. next visit [Tidy Modeling with
+    R](https://www.tmwr.org/)
+-   big data (10-100 GB), next learn
+    [data.table](https://github.com/Rdatatable/data.table)
+
+### Prerequisites
+
+``` r
+# tidyverse is R's main data science resource
+install.packages("tidyverse") 
+
+# load it
+library(tidyverse) 
+
+# tidyverse changes frequently, be sure to run this somewhat frequently (weekly?)
+tidyverse_update() 
+
+# other packages needed for this book:
+install.packages(
+  c("arrow", "babynames", "curl", "duckdb", "gapminder", 
+    "ggrepel", "ggridges", "ggthemes", "hexbin", "janitor", "Lahman", 
+    "leaflet", "maps", "nycflights13", "openxlsx", "palmerpenguins", 
+    "repurrrsive", "tidymodels", "writexl")
+  )
+
+# other packages will be needed, but we can install them as we go. so when we try this 
+library(some_package)
+#> Error in library(some_package) : there is no package called some_package
+# ^^^ whenever we see an error like this, install.packages("some_package")
+```
+
+## Whole game
+
+### 1 Data visualization
+
+#### 1.1 Introduction
+
+-   ggplot2: very common R data science tool for graphs/plots
+    -   "grammar of graphics" = system to describe and build graphs
+
+#### 1.2 First steps
+
+-   questions we want to ask about penguins:
+    -   Do penguins with longer flippers weigh more or less than
+        penguins with shorter flippers?
+    -   What does the relationship between flipper length and body mass
+        look like? Is it positive? Negative? Linear? Nonlinear?
+        -   Does the relationship vary by the species of the penguin?
+        -   How about by the island where the penguin lives?
+-   visualizations can help us answer these questions!
+
+##### 1.1.1 data frame (`penguins`)
+
+-   data frame: rectangular collection of variables (columns) and
+    observations (rows)
+-   variable: measurable quantity, quality or property
+-   value: state of variable at time of measurement
+    -   variable values can change from measurement to measurement
+        -   (either as experimental artifacts - in relation to
+            quantities we DONT want to measure or truly pure
+            randomness - or in relation to quantity we want to measure)
+-   observation (aka data point): set of measurements made under similar
+    conditions
+    -   usually make all measurements of observation at same time on
+        same object
+    -   observation contains several values, each associated with
+        different variables
+-   tabular data: set of values, each associated with a variable and
+    observation
+    -   tidy = each value in its own indexable cell, each variable in
+        its own column, and each observation in its own row
+-   for palmerpenguins:
+    -   variable = attribute shared by all penguins
+    -   observation = refers to attributes of single penguin
+-   see file "./code/whole-game/1-data-visualization.R" for remainder of
+    notes
+
+### 2 Workflow basics:
+
+-   "\<-" assignment operator shortcut "Alt + -" (use "Alt" key and "-"
+    key)
+-   use comments to explain :
+    1.  WHY not what/how. what/how should be understandable from code,
+        why is not necessarily clear
+    2.  explain overall plan at start, and important insights as you go.
+        not recoverable from code
+-   Rstudio autocompletion, start typing then click either:
+    -   TAB, to get vars
+    -   Cmd/Ctrl + ↑, to get commands you've typed with those characters
+        (use arrows to navigate)
+
+### 3. Data transformation
+
+#### Introduction

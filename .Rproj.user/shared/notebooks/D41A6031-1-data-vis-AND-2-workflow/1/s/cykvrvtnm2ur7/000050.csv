@@ -1,0 +1,4 @@
+"0",""
+"0","# numerical to color"
+"0","ggplot(mpg,aes(x=displ,y=hwy,color=cty))+"
+"0","  geom_point()"

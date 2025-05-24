@@ -1,0 +1,6 @@
+"0",""
+"0","# 4. What happens if you map the same variable to multiple aesthetics?"
+"0","# Answer: The variable's relationship to other variable is displayed in multiple"
+"0","# ways."
+"0","ggplot(mpg,aes(x=displ,y=cty,color=cty,size=cty))+"
+"0","  geom_point()"

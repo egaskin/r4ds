@@ -1,0 +1,8 @@
+"0","#######################################"
+"0","# 1.6.1 Exercises"
+"0",""
+"0","# 1. Run the following lines of code. Which of the two plots is saved as "
+"0","# mpg-plot.png? Why?"
+"0","# Answer: the 2nd once, since it is the most recent plot"
+"0","ggplot(mpg, aes(x = class)) +"
+"0","  geom_bar()"

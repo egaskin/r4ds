@@ -1,0 +1,7 @@
+"0",""
+"0","# 2. How are the following two plots different? Which aesthetic, color or fill, "
+"0","# is more useful for changing the color of bars?"
+"0","# Answer: fill achieves a more drastic color change, but I guess depends on "
+"0","# what you intended."
+"0","ggplot(penguins, aes(x = species)) +"
+"0","  geom_bar(color = ""red"")"

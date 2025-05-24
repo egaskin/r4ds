@@ -1,0 +1,14 @@
+"0","# multi group histogram: much better, thanks to:"
+"0","# https://r-graph-gallery.com/histogram_several_group.html"
+"0","ggplot("
+"0","  data = penguins,"
+"0","  mapping = aes(x=bill_depth_mm, fill = species),"
+"0",") +"
+"0","  geom_histogram( color=""#e9ecef"", alpha=0.6, position = 'identity') +"
+"0","  scale_fill_manual(values=c(""#69b3a2"", ""#404080"",""#b3697a"")) +"
+"0","  labs(fill="""")"
+"1","[38;5;254m`stat_bin()` using `bins = 30`. Pick better value with `binwidth`.[39m
+"
+"2","Warning:"
+"2"," [38;5;254mRemoved 2 rows containing non-finite outside the scale range (`stat_bin()`).[39m
+"

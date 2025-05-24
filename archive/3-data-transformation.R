@@ -1,0 +1,587 @@
+#######################################
+# YOU CAN FIND EXERCISES FOR CHAP 3 AT THE BOTTOM
+#######################################
+
+library(nycflights13)
+library(tidyverse)
+#> ── Attaching core tidyverse packages ───────────────────── tidyverse 2.0.0 ──
+#> ✔ dplyr     1.1.4     ✔ readr     2.1.5
+#> ✔ forcats   1.0.0     ✔ stringr   1.5.1
+#> ✔ ggplot2   3.5.2     ✔ tibble    3.2.1
+#> ✔ lubridate 1.9.4     ✔ tidyr     1.3.1
+#> ✔ purrr     1.0.4     
+#> ── Conflicts ─────────────────────────────────────── tidyverse_conflicts() ──
+#> ✖ dplyr::filter() masks stats::filter()
+#> ✖ dplyr::lag()    masks stats::lag()
+#> ℹ Use the conflicted package (<http://conflicted.r-lib.org/>) to force all
+#>  conflicts to become errors
+
+# to use R's base versions of filter() and lag(), have to do this:
+# package_name::function_name(), for example:
+  # stats::filter()
+  # stats::lag()
+
+# 3.1.2 nycflights13
+# another example of package_name::function_name()
+nycflights13::flights
+?flights
+
+typeof(flights) # R sees as list
+
+# tibbles designed for larger datasets, so default printing is not cumbersome
+flights # A tibble: 336,776 × 19
+
+# ways to view tibbles
+# (1)
+View(flights) # best way to view all data, if in Rstudio, comes with filter!
+
+# (2)
+# print() only prints first 10 rows and however many columns fits in the console
+# but can use width = Inf to change that
+print(flights,width = Inf) # prints all the columns
+
+# (3)
+glimpse(flights)
+
+# 3.1.3 dplyr basics
+# 6 things dplyr verbs (functions) share:
+# (1) first argument is dataframe
+# (2) subsequent arguments describe which cols
+# to operate on using var names (NOT quoted, "quasiquoted")
+# (3) output always new dataframe
+# (4) really good at one operation, so need to "|>" pipe multiple together
+# (5) operate on one of the following: rows, cols, groups, or tables
+# pipe takes thing on its left and passes it along to fn on its right:
+# x |> f(y) = f(x,y)
+# x |> f(y) |> g(z) = g(f(x,y),z)
+# (6) NEVER modify their inputs, always produces new dataframe
+
+flights |>
+  filter(dest == "IAH") |> 
+  group_by(year, month, day) |> 
+  summarize(
+    arr_delay = mean(arr_delay, na.rm = TRUE)
+  )
+
+# 3.2 Row verbs: 
+# 1. filter(), 
+# 2. arrange() (with desc())
+# 3. distinct()
+# 4. count()
+
+# filter() keeps rows based on values of columns, slice_*() for rows by position
+# filter() args:
+# (1st) dataframe
+# (2nd or more) conditions to keep the row
+  # conditions are >, >=, <, <=, ==, !=, and
+  # can be combined with & and | 
+
+# get all the flights departing over 120 min late
+flights |> filter(dep_delay > 120)
+
+# flights departing Jan 1
+flights |> 
+  filter(month == 1 & day == 1)
+
+# flights departing Jan or Feb
+flights |> 
+  filter(month == 1 | month == 2)
+  # WHICH IS EQUIVALENT TO SHORTCUT VERSION
+flights |>
+  filter(month %in% c(1,2))
+
+# to save the result of a filter operation
+jan1 <- flights |> 
+  filter(month == 1 & day == 1)
+
+# common errors with filter:
+
+# error 1: accidental = instead of ==
+# flights |> 
+#   filter(month = 1)
+# #> Error in `filter()`:
+# #> ! We detected a named input.
+# #> ℹ This usually means that you've used `=` instead of `==`.
+# #> ℹ Did you mean `month == 1`?
+
+# error 2: or like english instead of explicit boolean:
+flights |> 
+  filter(month == 1 | 2) # doesnt throw error but is nonsensical since 2 is
+# treated as a TRUE, 
+# https://stackoverflow.com/questions/5681166/what-evaluates-to-true-false-in-r
+
+# arrange() changes order of rows based on values of columns
+# arrange() args:
+# 1st. dataframe
+# 2nd. set of column names or more complicated expressions to order by,
+# if more than 1 column name given then each additional column used to break
+# ties from preceding column
+
+# this orders by departure time which is broken into 4 columns
+flights |> 
+  arrange(year, month, day, dep_time)
+
+# desc() expression re-orders based on col_name in Descending order
+flights |> 
+  arrange(desc(dep_delay)) 
+
+# distinct() finds all unique rows in dataset, so primarily operates on rows but
+# occasionally will supply column names
+# NOTE: only keeps first unique occurrence (discarding the rest!)
+
+# remove duplicate rows if there are any
+flights |> 
+  distinct()
+
+# find all unique origin and destination pairs
+# and only return just the pairs (not entire rows)
+flights |> 
+  distinct(origin, dest)
+
+# same as above except return entire rows whose origin/dest pairs are unique
+flights |>
+  distinct(origin, dest, .keep_all = TRUE)
+# ^ NOTICE: how they're all jan 1 for the displayed rows. that's b/c only 1st
+# occurrence of unique row is kept
+
+# count() will count all the unique pairs, you can sort said pairs 
+flights |>
+  count(origin,dest,sort = TRUE)
+
+# can add a new column with dplyr verbs
+flights |>
+  count(origin,dest,sort = TRUE,NEW_COLUMN = TRUE)
+
+# 3.3 Column verbs: 
+# 1. mutate(), creates new cols derived from existing cols
+# 2. select(), changes which cols are present
+# 3. rename(), changes names of cols
+# 4. relocate(), changes positions of cols (default front)
+
+# 3.3.1 mutate()
+flights |>
+  mutate(
+    gain = dep_delay - arr_delay,
+    speed = distance / air_time * 60,
+    .before = 1 # adds columns in order given before this col index
+    # alternatively 
+    # .before = month # use col name instead of index
+    
+    )
+
+flights |>
+  mutate(
+    gain = dep_delay - arr_delay,
+    speed = distance / air_time * 60,
+    # .after = 1, # adds columns in order given after this col index
+    # alternatively
+    .after = day, # use col name instead of index
+    .keep = "used" # controls which cols are kept. "used" = keep only used cols
+  )
+
+# 3.3.2 select()
+
+# select cols by name
+flights |>
+  select(year,month,day)
+
+# select cols between two cols (inclusive)
+flights |>
+  select(year:day)
+
+flights |>
+  select(1:3)
+
+# select cols except those from year to day (inclusive)
+flights |>
+  select(!year:day)
+
+# select cols that are "is.something"
+flights |>
+  select(where(is.character))
+
+# other tools WITH select (and other selecting funcs)
+# starts_with("abc"), col names beginning with "abc"
+# ends_with()
+# contains()
+# num_range("x",1:3): matches x1, x2, x3
+# matches() with some regex
+
+# rename variables as you select, using "="
+flights |>
+  select(tail_num = tailnum)
+
+# for automated column naming cleanup!
+janitor::clean_names(flights) # fails to find "tailnum" a problem, as v2.2.1
+?janitor::clean_names()
+
+# 3.3.3 rename() - keep all the columns but rename a few
+flights |>
+  rename(tail_num = tailnum)
+
+# 3.3.4 relocate()
+flights |> 
+  relocate(time_hour, air_time) 
+
+# using .before and .after arguments like mutate()
+flights |> # ":" to select range
+  relocate(year:dep_time, .after = time_hour)
+
+flights |> relocate(dep_time:year) # ":" to reverse range
+
+flights |> 
+  relocate(starts_with("arr"), .before = dep_time)
+
+library(tidyverse)
+library(palmerpenguins)
+library(ggthemes)
+
+
+#######################################
+# 3.2.5 Exercises
+library(nycflights13)
+
+# 1. In a single pipeline for each condition, find all flights that meet the 
+# condition:
+# Had an arrival delay of two or more hours
+# Flew to Houston (IAH or HOU)
+# Were operated by United, American, or Delta
+# Departed in summer (July, August, and September)
+# Arrived more than two hours late but didn’t leave late
+# Were delayed by at least an hour, but made up over 30 minutes in flight
+
+# we could split this into multiple filters, but i dont feel like it
+# the last condition conflicts with the 2nd to last condition though, so
+# i did that one by itself
+flights |>
+  filter(arr_delay >= 2*60 &
+           dest %in% c("IAH","HOU") &
+           carrier %in% c("UA","AA","DL") &
+           month %in% c(7,8,9) &
+           dep_delay <= 0 &
+           arr_delay >= 2*60
+  )
+
+# Were delayed by at least an hour, but made up over 30 minutes in flight
+# delayed part is easy, make sure dep_delay column >= 1 hr.
+# made up over 30 min in flight can be done in a couple ways:
+# (1) arr_time - sched_arr_time <= 30 WITH dep_delay >= 60 min
+# (2) arr_delay <= 30 WITH dep_delay >= 60 min
+last_condition <- flights |>
+  filter(dep_delay >= 1*60 & arr_delay <= 30)
+last_condition
+View(last_condition)
+max(last_condition["arr_delay"]) >= 30 # TRUE
+
+# 2. Sort flights to find the flights with the longest departure delays. Find 
+# the flights that left earliest in the morning.
+# Answer: see longest_dep_delay and earliest below for 10 longest/shortest
+
+# desc() for descending!
+longest_dep_delay <- 
+  flights |> 
+  arrange(desc(dep_delay)) 
+
+longest_dep_delay[1:10,c("flight","dep_delay")]
+
+earliest_dep_time <-
+  flights |>
+  arrange(dep_time)
+
+earliest_dep_time[1:10,c("flight","dep_time")]
+
+# 3. Sort flights to find the fastest flights. (Hint: Try including a math 
+# calculation inside of your function.)
+# my original answer was a little more tedious using $ notation, this answer is 
+# inspired by (and the same as)
+# https://mine-cetinkaya-rundel.github.io/r4ds-solutions/data-transform.html
+# Answer:
+fastest_flights <-
+  flights |>
+  mutate(speed = distance/air_time) |>
+  arrange(desc(speed)) |>
+  relocate(speed)
+
+fastest_flights
+
+# 4. Was there a flight on every day of 2013?
+# Answer: Yes! See below.
+
+# the number of rows equals how many unique days of 2013 had a flight
+unique_month_day_pairs <- 
+  flights |>
+  distinct(month,day) |>
+  nrow()
+
+dim(unique_month_day_pairs)[1] == 365
+
+# alternatively:
+flights |>
+  distinct(month,day) |>
+  nrow() ==
+  365
+
+# 5. Which flights traveled the farthest distance? Which traveled the least 
+# distance?
+# Answer: see below, 1 flight went 17 mi for the shortest distance, and
+# 342 flights went 4983 mi for the longest distance
+
+# old way
+# distance_sorted_flights <-
+#   flights |>
+#     arrange(distance) |>
+#     relocate(distance)
+
+# new way, to get number of flights meeting the distance
+distance_sorted_flights <-
+  flights |>
+  count(distance) |>
+  arrange(distance)
+
+# least distance, top 10
+distance_sorted_flights[1,1:2]
+
+# furthest distance, top 10
+# negative indexing to exclude everything except last
+end_exclude_idx <- dim(distance_sorted_flights)[1]-1
+distance_sorted_flights[-1:-end_exclude_idx,1:2]
+
+# 6. Does it matter what order you used filter() and arrange() if you’re using 
+# both? Why/why not? Think about the results and how much work the functions 
+# would have to do.
+# Answer: Yes, the order matters for the amount of work that will be done. 
+# Both arrange() and filter() will have to see 
+# every row of input dataframe. if we arrange() then filter() this will require 
+# seeing every element of original dataframe twice. if we filter() then 
+# arrange(), we will only have to arrange the elements that were filtered out, 
+# which will typically be less than the number of elements in the dataframe 
+# which typically will mean seeing each element less than two times. Order of 
+# arrange() and filter() will NOT affect the results though (assuming filter()
+# does not change the order of the output of arrange())
+
+#######################################
+# 3.2.5 Exercises
+# 1. Compare dep_time, sched_dep_time, and dep_delay. How would you expect those 
+# three numbers to be related?
+# Answer: "sched_dep_time + dep_delay = dep_time" is my original answer, but
+# this reveals that 594=600-6 instead of 554. This is because 5:54am is 6 
+# minutes before 6:00am. We need to deal with the time format.
+# NOTE: that b/c of different time zones we cannot easily compare times of 
+# arrivals and departures.
+
+
+# VERSION 2:
+
+add_interval_to_times_col <-function(times_col,interval_col){
+  
+  make_military_time_leading_0 <-function(flights_time_col){
+    needs_leading_0 <- flights_time_col < 1000
+    col_with_leading_0 <- as.character(flights_time_col)
+    col_with_leading_0[needs_leading_0] <- 
+      paste0("0",col_with_leading_0[needs_leading_0])
+    
+    # note that the column is now STRINGS
+    col_with_leading_0
+  }
+  
+  make_minutes_leading_0 <-function(some_int_col){
+    # use which() to ignore NAs
+    needs_leading_0 <- which(some_int_col < 10)
+    col_with_leading_0 <- as.character(some_int_col)
+    col_with_leading_0[needs_leading_0] <- 
+      paste0("0",col_with_leading_0[needs_leading_0])
+    
+    # note that the column is now STRINGS
+    col_with_leading_0
+  }
+  
+  get_hr_from_min <- function(n){
+    return(abs(n) %/% 60)
+  }
+  
+  get_min_from_min_after_hr_removed <- function(n){
+    abs(n) %% 60
+  }
+  
+  check_positive <- function(n){
+    # get TRUE if positive, FALSE if negative
+    # then convert to integers by doing arithmetic
+    # 1 if positive, 2 if negative. for the lookup table of
+    # convert_to_plus1_minus1.
+    (n > 0) + 1 
+  }
+  
+  convert_to_plus1_minus1 <- function(n){
+    lookup = c(-1,1)
+    lookup[n]
+  }
+  
+  # add a leading zero (string column now)
+  times_with_leading_0 <- make_military_time_leading_0(times_col)
+  
+  # these are integers
+  interval_min <- get_min_from_min_after_hr_removed(interval_col)
+  interval_hr <- get_hr_from_min(interval_col)
+  interval_sign <- convert_to_plus1_minus1(check_positive(interval_col))
+  times_hr <- as.integer(substr(times_with_leading_0,1,2))
+  times_min <- as.integer(substr(times_with_leading_0,3,4))
+  
+  # print("times_with_leading_0[1:17]")
+  # print(times_with_leading_0[1:17])
+  # print("interval_col[1:17]")
+  # print(interval_col[1:17])
+  # print("times_min[1:17]")
+  # print(times_min[1:17])
+  # print("times_hr[1:17]")
+  # print(times_hr[1:17])
+  
+  
+  # increment the military time minutes and get the potential extra hours
+  times_min <- times_min + interval_min*interval_sign
+  extra_hr <- times_min %/% 60 # integer division
+  times_min <- times_min %% 60 # modulus/remainder operation
+  
+  # increment the military time hours
+  times_hr <- (times_hr + interval_hr*interval_sign + extra_hr) %% 24
+  
+  # convert both to strings, combine them, then convert back to int
+  times_with_leading_0 <- paste0(as.character(times_hr),
+                                 make_minutes_leading_0(times_min))
+  
+  # convert to integer to be in the HHMM or HMM format
+  times_with_leading_0 <- as.integer(times_with_leading_0)
+  
+  # final cleanup step. when n %% 24 = 0, this should actually be 2400 (i.e.
+  # should be 12am not 0am)
+  find_0 <- times_with_leading_0 == 0
+  
+  # print("find_0")
+  # print(find_0)
+  # print("times_with_leading_0")
+  # print(times_with_leading_0)
+  
+  times_with_leading_0[find_0] <- 2400
+  
+  times_with_leading_0
+}
+
+#### start: test cases for add_interval_to_times_col()
+# note: test cases 12 and 14 show that if the final times_min minutes is a single
+# digit integer (<10), appending this to the hour portion will result in 
+# incorrectly formatted time. For example, if times_min = 6, and times_hr = 4
+# then the final answer would be 46 instead of 406.
+test_q1 = select(flights,dep_time:dep_delay)[1:10,]
+new_rows <- tibble(dep_time = c(1417,600,559,406,2400,2400,2400),
+                   sched_dep_time = c(1835,600,559,406,2359,2250,1700),
+                   dep_delay = c(19*60 + 42,0,0,0,1,70,420))
+
+test_q1 <- bind_rows(test_q1,new_rows)
+test_q1
+
+add_interval_to_times_col(test_q1$sched_dep_time,
+                          test_q1$dep_delay)
+
+flights_na_counts <- colSums(is.na(flights))
+# flights_na_counts
+flights_na_counts[flights_na_counts > 0]
+
+#### end: test cases for add_interval_to_times_col() 
+
+flights_q1 <- # flights question 1
+  flights |>
+  select(dep_time:dep_delay) |>
+  # if had a filter() step, use .data$ NOT flights$
+  mutate(sum_sched_dep_time_plus_dep_delay = 
+           add_interval_to_times_col(.data$sched_dep_time, 
+                                     .data$dep_delay),
+         .before = 1
+  )
+
+flights_q1_na_counts <- colSums(is.na(flights_q1))
+flights_q1_na_counts[flights_q1_na_counts > 0]
+
+flights_q1_clean <- flights_q1 %>%
+  filter(
+    !is.na(dep_time),
+    !is.na(dep_delay),
+    !is.na(sched_dep_time)
+  )
+
+flights_clean <- flights |>
+  filter(
+    !is.na(dep_time),
+    !is.na(dep_delay),
+    !is.na(sched_dep_time)
+  )
+
+flights_clean_na_counts <- colSums(is.na(flights_clean))
+flights_clean_na_counts[flights_clean_na_counts > 0]
+
+flights_q1_clean_na_counts <- colSums(is.na(flights_q1_clean))
+flights_q1_clean_na_counts[flights_q1_clean_na_counts > 0]
+
+# flights_q1_clean[flights_q1_clean$sum_sched_dep_time_plus_dep_delay != flights_clean$dep_time,]
+# reveals the bad rows!   
+print( n = 29,
+       flights_q1_clean[flights_q1_clean$sum_sched_dep_time_plus_dep_delay != flights_clean$dep_time,]
+)
+
+# VERSION 1:
+# DOESNT WORK BECAUSE e.g. 530 = 5:30 am. can't simply add: 530+65=595.
+# df <-
+# flights |>
+#   select(dep_time:dep_delay) |>
+#   mutate(sum_dep_sched_plus_delay = sched_dep_time + minutes(dep_delay),
+#          .before = 1)
+# df
+
+# 2. Brainstorm as many ways as possible to select dep_time, dep_delay, arr_time, 
+# and arr_delay from flights.
+# Answer: Assuming a single select statement used without other column verbs 
+# (otherwise very many possibilities). select(flights, INSERT_HERE)
+# INSERT_HERE = 
+select(flights,dep_time, dep_delay, arr_time, arr_delay)
+select(flights,c(4,6,7,9))
+select(-1:-3,-5,-8,-10:-ncol(flights)) # EQUIVALENT -c(1:3,5,8,10:ncol(flights))
+select(flights,all_of(c("dep_time", "dep_delay", "arr_time", "arr_delay")))
+select(flights,any_of(c("dep_time", "dep_delay", "arr_time", "arr_delay")))
+select(flights,! any_of(c("year", "month", "day", "sched_dep_time", 
+                          "sched_arr_time", "carrier", "flight", "tailnum", 
+                          'origin', "dest", "air_time", "distance", "hour", 
+                          "minute", "time_hour")))
+
+# 3. What happens if you specify the name of the same variable multiple times in a 
+# select() call?
+# Answer: It seems only the first time its specified matters, the rest are 
+# ignored. Note: we also learned that select can reorder the columns into the
+# order we select them in.
+
+flights |> select(dep_time,dep_time,year,year,year,dep_time)
+
+# 4. What does the any_of() function do? Why might it be helpful in conjunction 
+# with this vector?
+# Answer: select(df, any_of()) selects from df any column whose name matches a 
+# string from the vector, and ignores names not present
+variables <- c("year", "month", "day", "dep_delay", "arr_delay", "DUMMY")
+flights |> select(any_of(variables))
+
+# 5. Does the result of running the following code surprise you? How do the 
+# select helpers deal with upper and lower case by default? How can you change 
+# that default?
+# Answer: Yes, I am surprised. The select helpers seem to ignore case.
+flights |> select(contains("TiMe"))
+
+# 6. Rename air_time to air_time_min to indicate units of measurement and move 
+# it to the beginning of the data frame.
+# Answer: see below.
+flights |> 
+  rename(air_time_min = air_time) |>
+  relocate(air_time_min)
+
+# 7. Why doesn’t the following work, and what does the error mean?
+# Answer: select ONLY returns selected columns in new dataframe, so add 
+# arr_delay to select statement
+flights |>
+  select(tailnum, arr_delay) |> 
+  arrange(arr_delay)
+
