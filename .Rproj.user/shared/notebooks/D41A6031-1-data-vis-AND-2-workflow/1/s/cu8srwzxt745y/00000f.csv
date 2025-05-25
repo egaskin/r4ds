@@ -1,7 +1,0 @@
-"0","#######################################"
-"0","# 1.6 saving your plots "
-"0","ggplot(penguins, aes(x = flipper_length_mm, y = body_mass_g)) +"
-"0","  geom_point()"
-"2","Warning:"
-"2"," [38;5;254mRemoved 2 rows containing missing values or values outside the scale range (`geom_point()`).[39m
-"

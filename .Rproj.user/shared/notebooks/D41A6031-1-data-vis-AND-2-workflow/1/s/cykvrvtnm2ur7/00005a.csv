@@ -1,7 +1,0 @@
-"0",""
-"0","# WINNER WINNER WINNER imo"
-"0","# you can see the clear patttern that as city gas mileage increases so does"
-"0","# hwy. cyl by color also reveals 3 distinct groupings and a trend:"
-"0","# more cylinders comes with more displacement but worse gas mileage"
-"0","ggplot(mpg,aes(x=displ,y=hwy,color=cyl,size=cty))+"
-"0","  geom_point()"

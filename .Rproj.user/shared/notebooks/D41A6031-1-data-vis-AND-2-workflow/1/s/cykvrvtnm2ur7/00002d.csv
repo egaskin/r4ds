@@ -1,3 +1,0 @@
-"0","# boxplot(x=diamonds[""carat""],y=diamonds[""color""])"
-"0","ggplot(diamonds,aes(y=carat,x=color))+"
-"0","  geom_boxplot()"

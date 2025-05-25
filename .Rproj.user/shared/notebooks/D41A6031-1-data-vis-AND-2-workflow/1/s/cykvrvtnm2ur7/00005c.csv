@@ -1,7 +1,0 @@
-"0",""
-"0","# 3. In the scatterplot of hwy vs. displ, what happens if you map a third variable "
-"0","# to linewidth?"
-"0","# Answer: scatter plots by themselves do not have lines (unless you overlay with"
-"0","# a smoothing function), so linewidth does nothing no matter the variable."
-"0","ggplot(mpg,aes(x=displ,y=hwy,color=cyl,size=cty,linewidth=year))+"
-"0","  geom_point()"

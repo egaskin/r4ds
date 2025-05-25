@@ -1,9 +1,0 @@
-"0","# bar plot: im not sure how to interpret the height of the bar tbh"
-"0","ggplot("
-"0","  data = penguins,"
-"0","  mapping = aes(y=bill_depth_mm,x=species),"
-"0",") +"
-"0","  geom_col() # NOT geom_bar(), geom_bar() only takes x OR y (not both) and "
-"2","Warning:"
-"2"," [38;5;254mRemoved 2 rows containing missing values or values outside the scale range (`geom_col()`).[39m
-"

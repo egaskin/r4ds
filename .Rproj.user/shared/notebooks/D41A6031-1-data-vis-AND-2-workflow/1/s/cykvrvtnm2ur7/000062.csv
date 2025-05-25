@@ -1,6 +1,0 @@
-"0","ggplot(penguins,aes(x=bill_length_mm, y=bill_depth_mm, color=species))+"
-"0","  geom_point()+"
-"0","  facet_wrap(~species)"
-"2","Warning:"
-"2"," [38;5;254mRemoved 2 rows containing missing values or values outside the scale range (`geom_point()`).[39m
-"
