@@ -634,10 +634,14 @@ flights |>
     -   grouped features is a class of the data frame
 
     ```{r}
+    attr(flights,"class") # without grouping
+
     # example grouping by month
     flights |>
       group_by(month) |>
-      attributes() # groups added to $class attribute!
+      attr("class") # "grouped_df" added to class after grouping
+      # don't use the full attributes call because row names prints out LONG
+      # attributes() # groups added to $class attribute!
     ```
 
     ## 3.5.2 summarize()
