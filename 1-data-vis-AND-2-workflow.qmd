@@ -4,23 +4,38 @@ format: html
 editor: visual
 ---
 
-## Why this formatting?
-I originally had all of chapter 1, 2, and 3 in R scripts, but then realized a "Jupyter Notebook" like experience would make things 1000x better. I've just copied and pasted the code into the cell below
+# Why this formatting?
+I originally had all of chapter 1, 2, and 3 in R scripts, but then realized a "Jupyter Notebook" like experience would make things 1000x better. I've just copied and pasted the code into an R cell at the bottom
 
-## Introduction
+# Introduction
 
-### What we will learn
+## What we will learn
 
 ![data science modeling process visual (Figure 1)](https://r4ds.hadley.nz/diagrams/data-science/base.png)
 
-steps of data science: 1. wrangling: fighting data into desired format via tidy + transform - tidy = giving consistent structure to data, usually each column is variable and row is observation - transform = - filtering for observations of interest - creating new variables that are functions of existing variables - calculating summary statistics 2. visualization: good visuals reveal new things, raise new questions, hint at whether your wrong/right, and hint about if more data is needed - visuals aren't scalable, they require humans to interpret 3. model: mathematical or computational tool for answering precise questions - complementary tools to visualizing once questions have been made precise 4. communication: models and visualizations are USELESS unless we can communicate results to others
+steps of data science: 
 
-### What we won't learn
+1. wrangling: fighting data into desired format via tidy + transform 
+  - tidy = giving consistent structure to data, usually each column is variable and row is observation 
+  - transform = 
+    - filtering for observations of interest 
+    - creating new variables that are functions of existing variables 
+    - calculating summary statistics 
+
+2. visualization: good visuals reveal new things, raise new questions, hint at whether your wrong/right, and hint about if more data is needed 
+  - visuals aren't scalable, they require humans to interpret 
+
+3. model: mathematical or computational tool for answering precise questions 
+  - complementary tools to visualizing once questions have been made precise 
+
+4. communication: models and visualizations are USELESS unless we can communicate results to others
+
+## What we won't learn
 
 -   modeling in great depth. next visit [Tidy Modeling with R](https://www.tmwr.org/)
 -   big data (10-100 GB), next learn [data.table](https://github.com/Rdatatable/data.table)
 
-### Prerequisites
+## Prerequisites
 
 ``` r
 # tidyverse is R's main data science resource
@@ -46,16 +61,16 @@ library(some_package)
 # ^^^ whenever we see an error like this, install.packages("some_package")
 ```
 
-## Whole game
+# Whole game
 
-### 1 Data visualization
+## 1 Data visualization
 
-#### 1.1 Introduction
+## 1.1 Introduction
 
 -   ggplot2: very common R data science tool for graphs/plots
     -   "grammar of graphics" = system to describe and build graphs
 
-#### 1.2 First steps
+## 1.2 First steps
 
 -   questions we want to ask about penguins:
     -   Do penguins with longer flippers weigh more or less than penguins with shorter flippers?
@@ -64,7 +79,7 @@ library(some_package)
         -   How about by the island where the penguin lives?
 -   visualizations can help us answer these questions!
 
-##### 1.1.1 data frame (`penguins`)
+### 1.1.1 data frame (`penguins`)
 
 -   data frame: rectangular collection of variables (columns) and observations (rows)
 -   variable: measurable quantity, quality or property
@@ -79,16 +94,19 @@ library(some_package)
 -   for palmerpenguins:
     -   variable = attribute shared by all penguins
     -   observation = refers to attributes of single penguin
--   see file "./code/whole-game/1-data-visualization.R" for remainder of notes
-
-### Chapter 1 Code
+    
+## Chapter 1 Code
 
 ```{r}
 library(tidyverse)
 library(palmerpenguins)
 library(ggthemes)
 
-#######################################
+# TIBBLEs (special type of dataframe)
+
+attributes(palmerpenguins)
+
+####################
 # section 1.2 first steps
 # ways of viewing data frames
   # way 1:
@@ -161,7 +179,7 @@ ggplot(
   ) +
   scale_color_colorblind()
 
-#######################################
+####################
 # section 1.3 ggplot2 calls
 
 # ggplot2 function calls with less typing/lines:
@@ -173,7 +191,7 @@ penguins |>
   ggplot(aes(x=flipper_length_mm, y=body_mass_g))+
   geom_point()
 
-#######################################
+####################
 # section 1.4 visualizing distributions
 # visualizing a variable's distribution depends on if categorical or numerical
 
@@ -210,7 +228,7 @@ ggplot(penguins, aes(x = body_mass_g)) +
 ggplot(penguins, aes(x=body_mass_g))+
   geom_density()
 
-#######################################
+####################
 # section 1.5 visualizing relationships - requires >= 2 vars mapped to aesthetic
 
 # section 1.5.2 - one numerical and one categorical
@@ -261,7 +279,7 @@ ggplot(penguins,aes(x=flipper_length_mm,y=body_mass_g))+
 # how to see options for aesthetics ggplot
 vignette("ggplot2-specs")
 
-#######################################
+####################
 # 1.6 saving your plots 
 ggplot(penguins, aes(x = flipper_length_mm, y = body_mass_g)) +
   geom_point()
@@ -272,10 +290,10 @@ ggplot(penguins, aes(x = flipper_length_mm, y = body_mass_g)) +
 ggsave(filename = "./plots/1-6-penguin-plot.png")
 ```
 
-### Chapter 1 Exercises
+## Chapter 1 Exercises
 
 ```{r}
-#######################################
+####################
 library(tidyverse)
 library(palmerpenguins)
 library(ggthemes)
@@ -410,7 +428,7 @@ ggplot() +
     mapping = aes(x = flipper_length_mm, y = body_mass_g)
   )
 
-#######################################
+####################
 # 1.4.3 Exercises
 # 1. Make a bar plot of species of penguins, where you assign species to the y 
 # aesthetic. How is this plot different?
@@ -450,7 +468,7 @@ for (i in test_binwidths){
   print(p_i)
 }
 
-#######################################
+####################
 # 1.5.5 Exercises
 # 1. The mpg data frame that is bundled with the ggplot2 package contains 234 
 # observations collected by the US Environmental Protection Agency on 38 car 
@@ -573,7 +591,7 @@ ggplot(penguins, aes(x = island, fill = species)) +
   geom_bar(position = "fill")
 ggplot(penguins, aes(x = species, fill = island)) +
   geom_bar(position = "fill")
-#######################################
+####################
 # 1.6.1 Exercises
 
 # 1. Run the following lines of code. Which of the two plots is saved as 
@@ -592,7 +610,7 @@ ggsave("./plots/1-6-1-1-mpg-plot.png")
 ggsave("./plots/1-6-1-1-mpg-plot.pdf")
 ```
 
-### 2 Workflow basics:
+## 2 Workflow basics:
 
 -   "\<-" assignment operator shortcut "Alt + -" (use "Alt" key and "-" key)
 -   use comments to explain :
@@ -603,7 +621,7 @@ ggsave("./plots/1-6-1-1-mpg-plot.pdf")
     -   Cmd/Ctrl + ↑, to get commands you've typed with those characters (use arrows to navigate)
 
 ```{r}
-#######################################
+####################
 # 2.5 exercises
 # 0. bonus code that didn't belong in its own file
 seq(1,10) # creates a integer sequence from 1 to 10

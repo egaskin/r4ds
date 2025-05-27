@@ -1576,6 +1576,52 @@ Caused by warning in `add_interval_to_times_col()`:
 </div>
 </div>
 </section>
+<section id="the-pipe" class="level1">
+<h1>3.4 The pipe</h1>
+<ul>
+<li>pipe operator
+<ul>
+<li>“|&gt;” for base R
+<ul>
+<li>slightly more efficient</li>
+<li>good for simple pipelines</li>
+<li>only need to pipe into first argument of funcs</li>
+<li>fewer dependencies</li>
+</ul></li>
+<li>“%&gt;%” for tidyverse (e.g.&nbsp;dplyr!)
+<ul>
+<li>allows dot “.” to control where arguments go</li>
+<li>allows piping into 2nd/third arguments</li>
+<li>more complex pipes</li>
+</ul></li>
+</ul></li>
+<li>pipe typing SHORTCUT: <code>Ctrl + Shift + M</code></li>
+<li>pipe is good for combining multiple verbs, to answer multifaceted questions like “find fastest flights to Houston’s IAH airport”</li>
+</ul>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb128"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb128-1"><a href="#cb128-1" aria-hidden="true" tabindex="-1"></a>flights <span class="sc">|&gt;</span></span>
+<span id="cb128-2"><a href="#cb128-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(dest <span class="sc">==</span> <span class="st">"IAH"</span>) <span class="sc">|&gt;</span></span>
+<span id="cb128-3"><a href="#cb128-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">mph =</span> distance <span class="sc">/</span> air_time <span class="sc">*</span> <span class="dv">60</span>) <span class="sc">|&gt;</span></span>
+<span id="cb128-4"><a href="#cb128-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(year<span class="sc">:</span>day, dep_time, carrier, flight, mph) <span class="sc">|&gt;</span></span>
+<span id="cb128-5"><a href="#cb128-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">arrange</span>(<span class="fu">desc</span>(mph))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code># A tibble: 7,198 × 7
+    year month   day dep_time carrier flight   mph
+   &lt;int&gt; &lt;int&gt; &lt;int&gt;    &lt;int&gt; &lt;chr&gt;    &lt;int&gt; &lt;dbl&gt;
+ 1  2013     7     9      707 UA         226  522.
+ 2  2013     8    27     1850 UA        1128  521.
+ 3  2013     8    28      902 UA        1711  519.
+ 4  2013     8    28     2122 UA        1022  519.
+ 5  2013     6    11     1628 UA        1178  515.
+ 6  2013     8    27     1017 UA         333  515.
+ 7  2013     8    27     1205 UA        1421  515.
+ 8  2013     8    27     1758 UA         302  515.
+ 9  2013     9    27      521 UA         252  515.
+10  2013     8    28      625 UA         559  515.
+# ℹ 7,188 more rows</code></pre>
+</div>
+</div>
+</section>
 
 </main>
 <!-- /main column -->

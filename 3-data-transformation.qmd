@@ -4,9 +4,9 @@ format: html
 editor: visual
 ---
 
-## Why this formatting?
-I originally had all of chapter 1, 2, and 3 in R scripts, but then realized a "Jupyter Notebook" like experience would make things 1000x better. I've just copied and pasted the code into the cell below
+# Why this formatting?
 
+I originally had all of chapter 1, 2, and 3 in R scripts, but then realized a "Jupyter Notebook" like experience would make things 1000x better. I've just copied and pasted the code into the cell below
 
 ```{r}
 #######################################
@@ -597,3 +597,81 @@ flights |>
 
 
 ```
+
+# 3.4 The pipe
+
+-   pipe operator: use the base R version unless you HAVE to use magrittr's
+    -   "\|\>" for base R
+        -   slightly more efficient
+        -   good for simple pipelines
+        -   only need to pipe into first argument of funcs
+        -   fewer dependencies
+    -   "%\>%" from magrittr in tidyverse
+        -   allows dot "." to control where arguments go
+        -   allows piping into 2nd/third arguments
+        -   more complex pipes
+-   pipe typing SHORTCUT: `Ctrl + Shift + M`
+-   pipe is good for combining multiple verbs, to answer multifaceted questions like "find fastest flights to Houston's IAH airport"
+
+```{r}
+flights |>
+  filter(dest == "IAH") |>
+  mutate(mph = distance / air_time * 60) |>
+  select(year:day, dep_time, carrier, flight, mph) |>
+  arrange(desc(mph))
+```
+
+# 3.5 Groups
+
+-   dplyr allows you to divide dataset into groups
+-   group functions: group_by(), summarize(), and "slice\_" family
+
+## 3.5.1 group_by()
+
+-   group_by() doesn't change the data, but it groups the data by some attribute/feature then
+
+    -   subsequent operations/verbs will work by that grouping!
+    -   grouped features is a class of the data frame
+
+    ```{r}
+    # example grouping by month
+    flights |>
+      group_by(month) |>
+      attributes() # groups added to $class attribute!
+    ```
+
+    ## 3.5.2 summarize()
+
+-   summarize() =
+
+    -   most important group operation
+    -   if being used for single summary statistic reduces data frame to have single row for each group
+
+```{r}
+flights |>
+  group_by(month) |> 
+  summarize(
+    
+    # calculate the average delay by month
+    # mean(dep_delay) will result in NA coercion, we 
+    # need to add na.rm = TRUE
+    avg_delay = mean(dep_delay, na.rm = TRUE),
+    
+    
+    # count the number of rows (flights) in each column
+    n = n()
+  )
+  
+```
+
+## 3.5.3 slice\_ functions
+
+-   five functions that are handy for extracting specific rows in each group:
+
+    1.  `df |> slice_head(n=1)` = take first n rows from each group
+    2.  `df |> slice_tail(n=1)` = take last n rows from each group
+    3.  `df |> slice__head_min(x, n=1)` = takes n rows from each group with smallest value of column `x`
+    4.  `df |> slice__head_max(x, n=1)` = takes n rows from each group with largest value of column `x`
+    5.  `df |> slice_sample(n=1)` takes n random rows from each group
+
+    -   instead of `n =` you can use `prop = 0.1` to select 10% of rows in each group
