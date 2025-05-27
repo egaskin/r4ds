@@ -1,8 +1,17 @@
+# Ignore RStudio project files
 .Rproj.user/
-3-data-transformation_files/
-renv/
 .Rdata
 .Rhistory
 .Rprofile
 r4ds.Rproj
+
+# Ignore renv-related files
+renv/
 renv.lock
+
+# Ignore all qmd generated folders, which start 
+# with a number and then end in "_files" (e.g., 
+# 3-data-transformation_files/)
+[0-9]*_files/
+# Ignore qmd generated files
+[0-9]*.html
