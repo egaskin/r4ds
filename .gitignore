@@ -15,3 +15,6 @@ renv.lock
 [0-9]*_files/
 # Ignore qmd generated files
 [0-9]*.html
+
+# ignore my local archive
+archive/
