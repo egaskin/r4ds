@@ -1078,6 +1078,40 @@ df |>
   group_by(y, z) |>
   mutate(mean_x = mean(x))
 ```
+# 3.6 Don't use mere averages to measure performance
+
+Using baseball batting dataset from Lahman, `Lahman::Batting`
+- H = num hits
+- AB = attempted bats (at bats)
+- we compute the hit percentage of each player
+
+```{r}
+batters <- Lahman::Batting |> 
+  group_by(playerID) |> 
+  summarize(
+    performance = sum(H, na.rm = TRUE) / sum(AB, na.rm = TRUE),
+    n = sum(AB, na.rm = TRUE)
+  )
+batters
+```
+
+Two key takeways, see plot below:
+1. LAW OF LARGE NUMBERS: Variation in `performance` is larger among players with fewer AB. Plot is characteristic of a general truth: if you plot a summary statistics vs group size, variation decreases as sample size increases.
+2. `performance` (skill) is positively correlated with opporunities to hit the ball, `n`, since teams want their best batters to have more chances to hit the ball
+
+```{r}
+batters |> 
+  filter(n > 100) |> 
+  ggplot(aes(x = n, y = performance)) +
+  geom_point(alpha = 1 / 10) + 
+  geom_smooth(se = FALSE)
+```
+
+Notice the idiom piping |> into ggplot, then switching to adding layers to plot with +
+
+*Big takeway* ranking by a mere average doesn't necessarily result in getting the best players - sometimes those who attempted once and hit once, then "went out on top" will have a false "100% average AB". See resources below for solving this problem:
+- http://varianceexplained.org/r/empirical_bayes_baseball/  
+- https://www.evanmiller.org/how-not-to-sort-by-average-rating.html.
 
 
 # Resources
