@@ -5,6 +5,7 @@ editor: visual
 ---
 
 # Why this formatting?
+
 I originally had all of chapter 1, 2, and 3 in R scripts, but then realized a "Jupyter Notebook" like experience would make things 1000x better. I've just copied and pasted the code into an R cell at the bottom
 
 # Introduction
@@ -13,22 +14,25 @@ I originally had all of chapter 1, 2, and 3 in R scripts, but then realized a "J
 
 ![data science modeling process visual (Figure 1)](https://r4ds.hadley.nz/diagrams/data-science/base.png)
 
-steps of data science: 
+steps of data science:
 
-1. wrangling: fighting data into desired format via tidy + transform 
-  - tidy = giving consistent structure to data, usually each column is variable and row is observation 
-  - transform = 
-    - filtering for observations of interest 
-    - creating new variables that are functions of existing variables 
-    - calculating summary statistics 
+1.  wrangling: fighting data into desired format via tidy + transform
 
-2. visualization: good visuals reveal new things, raise new questions, hint at whether your wrong/right, and hint about if more data is needed 
-  - visuals aren't scalable, they require humans to interpret 
+-   tidy = giving consistent structure to data, usually each column is variable and row is observation
+-   transform =
+    -   filtering for observations of interest
+    -   creating new variables that are functions of existing variables
+    -   calculating summary statistics
 
-3. model: mathematical or computational tool for answering precise questions 
-  - complementary tools to visualizing once questions have been made precise 
+2.  visualization: good visuals reveal new things, raise new questions, hint at whether your wrong/right, and hint about if more data is needed
 
-4. communication: models and visualizations are USELESS unless we can communicate results to others
+-   visuals aren't scalable, they require humans to interpret
+
+3.  model: mathematical or computational tool for answering precise questions
+
+-   complementary tools to visualizing once questions have been made precise
+
+4.  communication: models and visualizations are USELESS unless we can communicate results to others
 
 ## What we won't learn
 
@@ -63,7 +67,7 @@ library(some_package)
 
 # Whole game
 
-## 1 Data visualization
+# 1 Data visualization
 
 ## 1.1 Introduction
 
@@ -94,8 +98,8 @@ library(some_package)
 -   for palmerpenguins:
     -   variable = attribute shared by all penguins
     -   observation = refers to attributes of single penguin
-    
-## Chapter 1 Code
+
+## Chapter 1 Code (not exercises)
 
 ```{r}
 library(tidyverse)
@@ -619,6 +623,8 @@ ggsave("./plots/1-6-1-1-mpg-plot.pdf")
 -   Rstudio autocompletion, start typing then click either:
     -   TAB, to get vars
     -   Cmd/Ctrl + ↑, to get commands you've typed with those characters (use arrows to navigate)
+
+## 2.5 Coding Exercises
 
 ```{r}
 ####################

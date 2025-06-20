@@ -8,6 +8,8 @@ editor: visual
 
 I originally had all of chapter 1, 2, and 3 in R scripts, but then realized a "Jupyter Notebook" like experience would make things 1000x better. I've just copied and pasted the code into the cell below
 
+# Code for 3.1 - 3.3
+
 ```{r}
 #######################################
 # YOU CAN FIND EXERCISES FOR CHAP 3 AT THE BOTTOM
@@ -304,8 +306,7 @@ earliest_dep_time[1:10,c("flight","dep_time")]
 # 3. Sort flights to find the fastest flights. (Hint: Try including a math 
 # calculation inside of your function.)
 # my original answer was a little more tedious using $ notation, this answer is 
-# inspired by (and the same as)
-# https://mine-cetinkaya-rundel.github.io/r4ds-solutions/data-transform.html
+# inspired by (and the same as) Resource 1.
 # Answer:
 fastest_flights <-
   flights |>
@@ -626,7 +627,7 @@ flights |>
 -   dplyr allows you to divide dataset into groups
 -   group functions: group_by(), summarize(), and "slice\_" family
 
-## 3.5.1 group_by()
+## 3.5.1 `group_by()`
 
 -   group_by() doesn't change the data, but it groups the data by some attribute/feature then
 
@@ -644,7 +645,7 @@ flights |>
       # attributes() # groups added to $class attribute!
     ```
 
-    ## 3.5.2 summarize()
+    ## 3.5.2 `summarize()`
 
 -   summarize() =
 
@@ -668,14 +669,418 @@ flights |>
   
 ```
 
-## 3.5.3 slice\_ functions
+## 3.5.3 `slice_` functions
 
 -   five functions that are handy for extracting specific rows in each group:
 
     1.  `df |> slice_head(n=1)` = take first n rows from each group
     2.  `df |> slice_tail(n=1)` = take last n rows from each group
-    3.  `df |> slice__head_min(x, n=1)` = takes n rows from each group with smallest value of column `x`
-    4.  `df |> slice__head_max(x, n=1)` = takes n rows from each group with largest value of column `x`
+    3.  `df |> slice__head_min(x, n=1)` = takes n rows from each group with smallest value of column `x` (returning all ties)
+    4.  `df |> slice__head_max(x, n=1)` = takes n rows from each group with largest value of column `x`(returning all ties)
     5.  `df |> slice_sample(n=1)` takes n random rows from each group
 
     -   instead of `n =` you can use `prop = 0.1` to select 10% of rows in each group
+    -   similar to `summarize()` but get whole corresponding row (rows if tie) instead of single summary statistic
+
+*Example below*: find flights most delayed upon arrival, grouped by destination
+
+```{r}
+# notice, this returns 108 rows but there are
+# only 105 destinations. this is because all tires for max are returned
+flights |> 
+  group_by(dest) |> 
+  slice_max(arr_delay, n = 1) |>
+  relocate(dest)
+
+# if we want exactly 1 row per group, we can
+# set with_ties = FALSE
+flights |> 
+  group_by(dest) |> 
+  slice_max(arr_delay, n = 1, with_ties = FALSE) |>
+  relocate(dest)
+```
+
+## 3.5.4 Group by multiple variables
+
+-   **summarizing by group issue**: summarizing peels off the last group unless you use the `.groups` argument
+-   `.groups =`
+    -   `"drop"` drops all grouping
+    -   `"keep"` preserves all grouping
+    -   `"drop_last"` will suppress the warning message that
+
+```{r}
+daily <- flights |>
+  group_by(year, month, day)
+
+# below will generate warning message: `summarise()` has grouped output by 'year', 'month'. You can override using the `.groups` argument.
+daily |> summarize(n=n(),mean_dep_time = mean(dep_time, na.rm = TRUE))
+
+daily |> summarize(n=n(),mean_dep_time = mean(dep_time, na.rm = TRUE), .groups = "keep")
+```
+
+## 3.5.5 Ungrouping
+
+-   summarizing an ungrouped dataframe simply results in treating the whole dataframe as 1 group
+
+```{r}
+# to ungroup a dataframe
+daily |> 
+  ungroup()
+
+# summarizing an ungrouped dataframe
+daily |>
+  ungroup() |>
+  summarize(
+    avg_delay = mean(dep_delay, na.rm = TRUE),
+    flights = n()
+  )
+```
+
+## 3.5.6 `.by`
+
+-   `.by` allows you to group for just a single operation
+    -   dont need to make a grouped dataframe
+    -   dont need to ungroup a grouped dataframe when you're done
+    -   dont need to surpress the multi-group warning message with `.group`
+
+```{r}
+# example with grouping by 1
+flights |>
+  summarize(
+    delay = mean(dep_delay, na.rm = TRUE),
+    n = n(),
+    .by = month
+  )
+
+# example with grouping by multiple
+flights |>
+  summarize(
+    delay = mean(dep_delay, na.rm = TRUE),
+    n = n(),
+    .by = c(origin,dest)
+  )
+```
+
+## 3.5.7 Exercises
+
+1.  Which carrier has the worst average delays? Challenge: can you disentangle the effects of bad airports vs. bad carriers? Why/why not? (Hint: think about `flights |> group_by(carrier, dest) |> summarize(n())`)
+
+**Answer**: Without disentangling effects of bad airport and bad carrier (naive version), F9 appears to be the worst with an average delay of 21.92 min. For the challenge, if my weighted average provides a disentanglement then F9 still has the worst even after accounting for bad airports.
+
+```{r}
+# naive version
+naive_df <-
+  flights |> 
+    group_by(carrier) |>
+    summarize(avg_delay = mean(arr_delay, na.rm = TRUE)) |>
+    arrange(desc(avg_delay)) # |>
+    # filter(carrier == "YV")
+
+avg_delay_YV_naive <- (naive_df |> filter(carrier == "YV"))$avg_delay
+
+print(avg_delay_YV_naive)
+
+# disentangle airport/flight version, v1 
+# NOT sufficient since this is just getting the numerator from the average, so
+# we are just comparing the sum of arr_delay for each carrier/dest. pair
+# let's explore further below
+  # flights |> 
+  #   group_by(carrier, dest) |>
+  #   summarize(
+  #     avg_delay = mean(arr_delay, na.rm = TRUE),
+  #     n = n(),
+  #     num_flight_weighted_avg_delay = avg_delay*n,
+  #     .groups = "keep"
+  #     ) |>
+  #   arrange(desc(num_flight_weighted_avg_delay))
+
+# arrange by n 
+flights |> 
+  group_by(carrier, dest) |>
+  summarize(
+    n = n(),
+    .groups = "keep"
+    ) |>
+  arrange(desc(n))
+
+# calc avg_delay, then arrange by carrier 
+flights |> 
+  group_by(carrier, dest) |>
+  summarize(
+    avg_delay = mean(arr_delay, na.rm = TRUE),
+    n = n(),
+    .groups = "keep"
+    ) |>
+  arrange(desc(carrier))
+
+# calc avg_delay, then arrange by dest 
+flights |> 
+  group_by(carrier, dest) |>
+  summarize(
+    avg_delay = mean(arr_delay, na.rm = TRUE),
+    n = n(),
+    .groups = "keep"
+    ) |>
+  arrange(desc(dest))
+
+# let's try to give remove the effects of bad airports by doing a weighted average: sum_i avg_delay_i * n_i for every carrier where the size of i is the number of dest/carrier pairs for a given carrier
+# arrange by carrier 
+  # df_1 <-
+  #   flights |> 
+  #     # get the summands for numerator of weighted avg
+  #     group_by(carrier, dest) |>
+  #     summarize(
+  #       avg_delay = mean(arr_delay, na.rm = TRUE),
+  #       n = n(),
+  #       .groups = "keep"
+  #       ) |>
+  #     arrange(desc(carrier)) |>
+  #     mutate(summands = avg_delay*n) |>
+  #   
+  #     # ungroup and get the sums
+  #     ungroup() |>
+  #     group_by(carrier) |>
+  #     summarize(
+  #       numerator = 
+  #     )
+  # 
+  # df_1 |> head()
+
+df_1 <-
+  flights |> 
+    # get the summands for numerator of weighted avg
+    group_by(carrier, dest) |>
+    summarize(
+      avg_delay = mean(arr_delay, na.rm = TRUE),
+      n = n(),
+      .groups = "keep"
+      ) |>
+  
+    # ungroup and then group by carrier alone, so we can get a weighted
+    # average wrt to carrier, weighting by counts of how many flights were to that dest for that carrier
+    ungroup() |>
+    group_by(carrier) |>
+    summarize(
+      weighted_avg_delay = weighted.mean(avg_delay, n, na.rm = TRUE),
+      .groups = "keep"
+    ) |>
+    arrange(desc(weighted_avg_delay))
+
+df_1 |> head()
+filter(df_1,carrier=="YV")$weighted_avg_delay
+
+df_1$weighted_avg_delay == naive_df$avg_delay # good, they are NOT equal! :)
+
+df_1$weighted_avg_delay - naive_df$avg_delay # but they are pretty close :(
+
+```
+
+2.  Find the flights that are most delayed upon departure from each destination.
+
+Answer: See below for top 5 most delayed upon departure flights FOR EACH destination.
+
+```{r}
+flights |>
+  group_by(dest) |> 
+  arrange(desc(dep_delay)) |>
+  relocate(dest, dep_delay) |>
+  slice_head(n=5) # NOT simply head(n=5), since we want most delayed for each destination.
+```
+
+3.  How do delays vary over the course of the day? Illustrate your answer with a plot.
+
+Answer: See below. Originally, I thought delay seems to not have a strong correlation with time of day given the numerous vertical groups that exist for all the various x_time, y_delay combinations. These are the plots that have not been summarized and smoothed. The point of the chapter is that large datasets often need transformation to pull out the patterns. The transformed (summarized and smoothed) plot is inspired by resources 1 and 2.
+
+```{r}
+head(flights)
+# TRANSFORMED DATA
+temp <- 
+  flights |>
+    group_by(hour) |>
+    summarize(avg_delay_by_hour = mean(dep_delay, na.rm = TRUE))
+
+head(temp)
+```
+
+```{r}
+ggplot(temp,aes(x = hour, y = avg_delay_by_hour))+
+  geom_line(linetype = "dashed") +
+  geom_point()
+
+```
+
+```{r}
+# ALL UNTRANSFORMED DATA BELOW!
+ggplot(flights,aes(x = dep_time, y = dep_delay, color = distance))+
+  geom_point()
+```
+
+```{r}
+# color by Posix time to see if time of year explains split along y=x
+ggplot(flights,aes(x = dep_time, y = dep_delay, color = time_hour))+
+  geom_point()
+```
+
+```{r}
+# color by destination to see if pattern emerges to explain split along y=x
+ggplot(flights,aes(x = dep_time, y = dep_delay, color = dest))+
+  geom_point()
+# THIS IS A TERRIBLE PLOT, TOO MANY DESINATIONS. and i guess doesnt make sense
+# that the destination would affect the departure time. except maybe how the seasons
+# vary more drastically the further you get from the equator??
+```
+
+```{r}
+# color by origin to see if pattern emerges to explain split along y=x
+ggplot(flights,aes(x = dep_time, y = dep_delay, color = origin))+
+  geom_point()
+```
+
+```{r}
+# color by origin to see if pattern emerges to explain split along y=x
+ggplot(flights,aes(x = arr_time, y = arr_delay, color = origin))+
+  geom_point()
+```
+
+```{r}
+# color by origin to see if pattern emerges to explain split along y=x
+ggplot(flights,aes(x = arr_time, y = dep_delay, color = origin))+
+  geom_point()
+```
+
+```{r}
+# color by origin to see if pattern emerges to explain split along y=x
+ggplot(flights,aes(x = dep_time, y = arr_delay, color = origin))+
+  geom_point()
+```
+
+4.  What happens if you supply a negative n to slice_min() and friends? 
+Answer: `slice_min(group_by(temp,col_2),col_1,n=2)` – pipe equivalent `temp |> group_by(col_2) |> slice_min(col_1,n=2)` – means get first 2 rows whose value is minimum in col_1 for each group when grouping by col_2. Documentation from ?slice_min, explains `n < 0` will get \# of rows equal to num_rows minus n (as if n were positive) that are minimum in col_1 when grouping by col_2. See example below.
+
+```{r}
+temp <- tibble(col_1=1:10,col_2=c(rep("a",5),rep("b",5)))
+temp
+
+# slice_min(group_by(temp,col_2),col_1,1)
+temp |> group_by(col_2) |> slice_min(col_1,n=2)
+
+temp |> group_by(col_2) |> slice_min(col_1,n=-2)
+
+```
+
+5.  Explain what `count()` does in terms of the dplyr verbs you just learned. What does the sort argument to `count()` do? 
+Answer: `count()`counts unique values when grouping by one or more variables. It's mathematically equivalent to `temp |> group_by(col_1,col_2) |> summarize(n=n())`. The sort argument sorts by the value of n
+
+```{r}
+temp <- tibble(col_1=1:10,
+               col_2=c(rep("a",5),rep("b",5)),
+               col_3=c(rep("male",3),rep("female",7)))
+temp
+count(temp,col_3,col_2,sort=TRUE)
+temp |> group_by(col_3,col_2) |> summarize(n=n(),.groups="keep")
+```
+
+6.  Suppose we have the following tiny data frame:
+
+```{r}
+df <- tibble(
+  x = 1:5,
+  y = c("a", "b", "a", "a", "b"),
+  z = c("K", "K", "L", "L", "K")
+)
+```
+
+a.  Write down what you think the output will look like, then check if you were correct, and describe what `group_by()` does. 
+Answer: I think `group_by()` will make two groups, one for rows where column y is "a" and one for rows where column y is "b". It will create a grouped dataframe that looks exactly like `df` except it now has the attribute $groups, which contains the grouping y, as indicated by "Groups:   y [2]" when you run the following.
+
+```{r}
+df |>
+  group_by(y)
+```
+b. Write down what you think the output will look like, then check if you were correct, and describe what `arrange()` does. Also, comment on how it’s different from the `group_by()` in part (a).
+Answer: I think `arrange()` will order the rows of `df` alphabetically by the column `y`. So rows 1,3,4 will be first followed by rows 2,5 when you run the following code.
+
+```{r}
+df |>
+  arrange(y)
+```
+c. Write down what you think the output will look like, then check if you were correct, and describe what the pipeline does.
+
+*WRONG* Answer: The output will look like a dataframe with two rows and one column like the following:
+2.66667
+3.5
+
+*CORRECT* Answer: The output will be a tibble dataframe with 2 rows and two columns. The first column will be the grouping variable (y), the second column will be the summary statistic calculated for the other input variable (x) after grouping on the grouping variable (y), which we dubbed mean_x. The dataframe will look like this when running the following (omitting the datatype of the columns):
+    y   mean_x
+1   a   2.66667
+2   b   3.5
+
+8/3 = (1+3+4)/3, for group y=a
+(1+3+4)/3 = 
+
+```{r}
+df |>
+  group_by(y) |>
+  summarize(mean_x = mean(x))
+```
+d. Write down what you think the output will look like, then check if you were correct, and describe what the pipeline does. Then, comment on what the message says.
+
+*WRONG* Answer: This will be the same as c, since the `.groups` argument was not specified so the 2nd grouping variable will be ignored. 
+
+*CORRECT* Answer: I misunderstood what the chapter means when it says "each summary peels off the last group". This just means that the groups attribute of the output will not have z anymore. Therefore, the dataframe will group by the combination y and z, creating 3 groups, then summarizing the mean of x for all 3 groups, looking like:
+a K 1
+b K 3.5 # 3.5 comes from (2+5)/2
+a L 3.5 # 3.5 comes from (3+4)/2
+
+```{r}
+df |>
+  group_by(y, z) |>
+  summarize(mean_x = mean(x))
+```
+
+e. Write down what you think the output will look like, then check if you were correct, and describe what the pipeline does. How is the output different from the one in part (d)?
+
+*WRONG* Answer: The same as part d, except now there is the multi group y,z instead of just a group y.
+
+*CORRECT* Answer: I for some reason though .groups was set to "keep" and not "drop" my mistake. "drop" will mean there are no groups leftover, but the output dataframe will be the same as d in every other way.
+
+```{r}
+df |>
+  group_by(y, z) |>
+  summarize(mean_x = mean(x), .groups = "drop")
+
+# EVEN IF THIS HAD BEEN IT, running groups(summarize(group_by)) shows two distinct groups rather than a single group y,z. Regardless of how R represents it, I do understand that there are 3 unique pairs of y,z; this is prob the most important thing.
+# df |>
+#   group_by(y, z) |>
+#   summarize(mean_x = mean(x), .groups = "keep")
+```
+
+f. Write down what you think the outputs will look like, then check if you were correct, and describe what each pipeline does. How are the outputs of the two pipelines different?
+
+*HALF WRONG* Answer: 
+
+The first pipeline's 1st step creates a grouped dataframe on y and z. Then it summarizes the x value of the grouped dataframe's 3 groups. There will be 1 group left in the output dataframe because of summarizes() wonky group peeling.
+
+The second pipeline 1st creates a grouped dataframe on y,z. Then it adds a new column called "mean(x)" to the grouped dataframe that is the mean of each row in the grouped dataframe. The mean of a single value will be that value, therefore it just adds a column called mean_x that has same value as x. There will be 2 groups left in the output dataframe, because mutate does not affect the groups of the input dataframe.
+
+*CORRECT* Answer: 
+
+See above for first pipeline, this is correct.
+
+As for the 2nd pipeline, verbs change their behavior to operate on groups if a grouped dataframe is input. The verb `mutate()` now computes the function `mean(x)` wrt to the rows of column x **of each group** then for every row in the original dataframe, it assigns the respective group mean for that row to the column mean_x (the number of rows won't be reduced as the first pipeline does)
+
+```{r}
+df |>
+  group_by(y, z) |>
+  summarize(mean_x = mean(x))
+
+df |>
+  group_by(y, z) |>
+  mutate(mean_x = mean(x))
+```
+
+
+# Resources
+
+1.  https://mine-cetinkaya-rundel.github.io/r4ds-solutions/data-transform.html
+2.  https://www.sthda.com/english/wiki/ggplot2-line-plot-quick-start-guide-r-software-and-data-visualization

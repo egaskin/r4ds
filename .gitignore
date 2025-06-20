@@ -1,4 +1,5 @@
 # Ignore RStudio project files
+# git rm -r --cached ".Rproj/" # since they were present before ignoring
 .Rproj.user/
 .Rdata
 .Rhistory
