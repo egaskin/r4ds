@@ -1,0 +1,16 @@
+---
+title: "07-data-import"
+format: html
+editor: visual
+---
+
+# Data Import
+
+## 7.1 Introduction
+Use `readr` package to load flat files in R.
+
+```{r}
+library(tidyverse)
+```
+
+## 7.2 Reading data from a file

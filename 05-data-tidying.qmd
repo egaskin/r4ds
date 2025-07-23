@@ -1,0 +1,424 @@
+---
+title: "5-data-tidying"
+format: html
+editor: visual
+---
+
+# 5 Data Tidying
+
+```{r}
+library(tidyverse)
+```
+
+## 5.1 Introduction
+
+-   Anna Karenina principle: success requires everything to go right, failure requires only one thing to go wrong (e.g. statistical tests)
+
+## 5.2 Tidy Data
+
+-   Data can be represented in many ways, but what ways are most useful?
+
+    1.  consistent format allows for easy development of tools for data storage and manipulation
+    2.  columns = vectors! vectorization in R allows speedier operations on homogenous collections of values
+
+-   Tidy data requires 3 things:
+
+    1.  Each row is an observation, each observation is a row
+    2.  Each column is a variable, each variable is a column
+    3.  Each "cell" (intersection of row and col) is a single value, and each value is a cell
+
+![Tidy Data](https://r4ds.hadley.nz/images/tidy-1.png "Tidy Data")
+
+### 5.2.1 Exercises
+
+1.  For each of the sample tables, describe what each observation and each column represents.
+
+-   Table 1: each row is a collection of 4 values (country, year, cases, population)
+-   Table 2: there are a pair of rows defining each country's info for a given year, related to TB cases based on the value of "type" (cases or population), so info is duplicated (country, year) so counts can be in a single column. Because the "count" column numeric values mean different things depending on the "type" column, the "count" column is not a variable which means not tidy
+-   table 3: each row is an observation (country, year, rate). Rate is a combination of two values, so the data is not tidy.
+
+2.  Sketch out the process you'd use to calculate the rate for table2 and table3.
+
+    Answer: Given table2, sort the rows based on country then year (with arrange) to establish a consistent row index, called sorted_table_2. Then, using sorted_table_2, filter out just the population types to get a table just like table1 except it has the type column and the count column is just the numbers for population. Save this table as pre_table_2_pop, and rename the count column as "population". Then, using sorted_table_2. filter out just the cases types row, which will be just like prev step except for cases. Save this table as pre_table_2_case, rename the count column as case. Now, we have everything we need, just add the count column from pre_table_2_pop to pre_table_2_case, and drop the type column. Now, divide cases by population and multiply by 10000.
+
+#### 5.2.1.2 table2
+```{r}
+table1
+
+table2
+
+table3
+```
+
+**wrong way to do this**
+
+```{r}
+
+###
+### THIS ONLY WORKS BECAUSE THE INDICES OF table |> filter(type == "population")
+### and table |> filter(type == "cases") happen to match up for this data. if
+### the dataframe was shuffled, this would NOT work, see below
+###
+
+tmp <- table2 |>
+         filter(type == "population") # extract just population
+table2 |>
+  filter(type == "cases") |>
+  mutate(cases = count,
+         population = tmp$count
+  ) |>
+  mutate(count = NULL, type = NULL) # delete the unneeded rows
+
+```
+
+**proof above is wrong**
+
+```{r}
+# here it is shuffled
+set.seed(42)
+random_idxs <- sample(1:length(row.names(table2)))
+random_idxs
+table2_shuffled <- table2[random_idxs,]
+table2_shuffled
+tmp <- table2_shuffled |>
+         filter(type == "population") # extract just population
+table2_shuffled |>
+  filter(type == "cases") |>
+  mutate(cases = count, 
+         population = tmp$count
+  ) |>
+  mutate(count = NULL, type = NULL) # delete the unneeded rows
+```
+
+**but can we fix it by arranging (sorting)? Yes!** We've implicitly established a common "index"
+
+```{r}
+# here it is shuffled
+set.seed(1234)
+random_idxs <- sample(1:length(row.names(table2)))
+random_idxs
+table2_shuffled <- table2[random_idxs,]
+print("AFTER SHUFFLING")
+table2_shuffled
+table2_shuffled <- table2_shuffled |>
+                     arrange(country, year) # sort on both just to ensure same order
+print("AFTER SORTING")
+table2_shuffled
+
+tmp <- table2_shuffled |>
+         filter(type == "population") # extract just population type
+
+answer <- table2_shuffled |>
+  filter(type == "cases") |>
+  mutate(cases = count, 
+         population = tmp$count
+  ) |>
+  mutate(
+    # delete the unneeded rows
+    count = NULL,
+    type = NULL,
+    
+    # calculate rate
+    rate = 10000 * cases / population
+  ) 
+
+answer
+```
+#### 5.2.1.2 table3
+```{r}
+table3 |>
+  separate(col = rate, sep = "/", into = c("cases", "population")) |>
+  mutate(
+    cases = as.integer(cases),
+    population = as.integer(population),
+    rate = 10000 * cases/population
+  )
+
+# table3 |>
+#   mutate(
+#     rate = eval(str2lang(rate))
+#   )
+```
+
+
+## 5.3 Lengthening data
+
+-   `pivot` data into tidy form!
+-   `pivot_longer()` for case where values are in column/variable names
+
+### 5.3.1 Data in column names
+
+-   `billboard` dataset of billboard top 100
+
+```{r}
+billboard
+```
+
+-   76 columns (`wk1`-`wk76`) describing rank of song in each week
+    -   data is NOT tidy since `wk` column names are one variable `week` and cell values are another `rank` thus a cell represents two variables at once
+
+```{r}
+billboard |>
+  pivot_longer(
+    cols = starts_with("wk"), 
+    names_to = "week", 
+    values_to = "rank"
+  )
+```
+
+-   pipe dataframe into `pivot`
+-   `cols`: specify cols to be pivoted
+-   `names_to`: specify name for the var that is being converted from column names
+-   `values_to`: specify name of variable stored in cell values
+-   **Notice** 2 Pac's wk8-wk10 are NA, suggesting he wasn't in the 100 after wk7. drop NA rows!
+
+```{r}
+billboard |>
+  pivot_longer(
+    cols = starts_with("wk"), 
+    names_to = "week", 
+    values_to = "rank",
+    values_drop_na = TRUE
+  )
+```
+
+```{r}
+billboard_longer <- billboard |>
+  pivot_longer(
+    cols = starts_with("wk"), 
+    names_to = "week", 
+    values_to = "rank",
+    values_drop_na = TRUE
+  ) |>
+  mutate(
+    # parse number gets 1st number of string as double and discards rest
+    week = parse_number(week)
+  )
+
+billboard_longer
+```
+
+Using the above data, we can visualize relationship between rank and week for each song (track)
+
+```{r}
+billboard_longer |>
+  ggplot(aes(x = week, y = rank, group = track)) +
+  geom_line(alpha = 0.25) + 
+  scale_y_reverse()
+```
+
+### 5.3.2 How does pivoting work?
+
+Pivot longer: - for each column from the columns that are to become a single variable (`names_to`), values in a column that were already a variable (not in the set being pivoted) will have to be repeated once for each column being pivoted - for the values that are in a cell within some column that is being pivoted, these will be "unwound" row by row to match with the new rows values
+
+```{r}
+df <- tribble(
+  ~id,  ~bp1, ~bp2,
+   "A",  100,  120,
+   "B",  140,  115,
+   "C",  120,  125
+)
+
+# pivot into a longer form. but is the form tidy?
+df |> 
+  pivot_longer(
+    cols = bp1:bp2,
+    names_to = "measurement",
+    values_to = "value"
+  )
+```
+
+#### QUESTION
+
+Isn't unrolling df above on bp1 and bp2 result in untidy data? "value" now represents two types of measurement, so we need the other column to discern which type. Just like table2 vs table1 in 5.2. I guess this may be for illustrative purposes?
+
+### 5.3.3 Many variables in column names
+
+```{r}
+who2
+
+?who2
+```
+
+```{r}
+who2 |>
+  pivot_longer(
+    cols = !(country:year), # alternatively, cols = sp_m_014:sp_m_65
+    names_to = c("diagnosis_method", "gender", "age_range"),
+    names_sep = "_",
+    values_to = "count",
+    values_drop_na = TRUE
+  )
+```
+
+### 5.3.4 Data and variable names in the column headers
+
+```{r}
+household
+```
+
+My guess on how to *manually* make it tidy
+
+```{r}
+tibble(
+  family       = c(1, 1, 2), # etc. etc., so there will be 9 rows = 10 minus 1 for N/A of family 2 child 2
+  child_number = c(1, 2, 1),
+  dob          = c("1998-11-26", "2000-01-29", "2002-07-11"),
+  name         = c("Susan", "Jose", "Mark")
+)
+```
+
+-   `.value`: sentinel input for `names_to` arg for `pivot_longer()`, used if the column name(s) encode two pieces of information, value/data and variable, and splits input column names in two. the first part is the new column/variable name, the second part is new values
+
+```{r}
+household |>
+  pivot_longer(
+    cols = !family,
+    names_to = c(".value", "child"),
+    names_sep = "_",
+    values_drop_na = TRUE
+  ) |>
+  mutate(child = parse_number(child,"d"))
+```
+
+## 5.4 Widening data
+
+-   `pivot_wider()` makes datasets wider by increasing columns and reducing rows
+    -   helps when one observation is spread over multiple rows
+        -   rare occurence, but seems to happen a lot with governmental data
+
+```{r}
+cms_patient_experience
+?cms_patient_experience
+```
+
+-   core unit being studied is organization, but each observation is spread across six rows. we can see complete set of organizations using distinct on following pair of vars (also works on each single var, but is most informative as pair)
+
+```{r}
+cms_patient_experience |>
+  distinct(measure_cd, measure_title)
+```
+
+-   values in `measure_cd` and `measure_title` dont make great var/col names, but we'll use cd for now (in real world, maybe create own)
+
+```{r}
+pivoted_cms_patient_experience_v1 <- 
+  cms_patient_experience |>
+    pivot_wider(
+      names_from = measure_cd,
+      values_from = prf_rate
+    )
+
+pivoted_cms_patient_experience_v1
+```
+
+-   the above isnt quite right, still duplicates of `org_pac_id`
+    -   we need additional arg saying which col or cols have values uniquely identifying each row
+    -   in this case, cols starting with `"org"`
+
+```{r}
+pivoted_cms_patient_experience_v2 <- 
+  cms_patient_experience |>
+    pivot_wider(
+      id_cols = starts_with("org"),
+      names_from = measure_cd,
+      values_from = prf_rate
+    )
+
+pivoted_cms_patient_experience_v2
+```
+
+```{r}
+# run this, then use RStudio's filter on "org_pac_id" for "0446157747"
+View(pivoted_cms_patient_experience_v1)
+View(pivoted_cms_patient_experience_v2)
+```
+
+When you compare the pivot without the vars specifying the var(s) defining unique rows, you see that v2 above has shortened all the unique sets of {org_pac_id, org_num} into a single row. For example,\
+{0446157747, USC CARE MEDICAL GROUP INC} went from 6 rows to 1 row, measure_titles were dropped and the CAHPS_GRP_X was filled out for all 6 types of groups for the "0446157747" observation in a single row. Note: by specifying `id_cols` we will drop columns that aren't in `names_from` (for example: `measure_title` for v2)
+
+### 5.4.3. How does `pivot_wider` work?
+
+1.  figure out what will go in rows and columns. New column names will come from unique values specified in the column(s) for "names_from" arg.
+2.  default, rows in output are determined by values not specified in new names or values. overwritten if `id_cols` not `NULL`
+3.  create empty dataframe with cols as specified by `names_from` and uniquely identified by `id_cols`
+4.  fill in values based on `values_from`
+
+```{r}
+# step 0, how pivot_wider works
+df <- tribble(
+  ~id, ~measurement, ~value,
+  "A",        "bp1",    100,
+  "B",        "bp1",    140,
+  "B",        "bp2",    115,
+  "A",        "bp2",    120,
+  "A",        "bp3",    105,
+)
+
+df
+```
+
+```{r}
+# pivot_wider
+df |>
+  pivot_wider(
+    names_from = measurement,
+    values_from = value
+  )
+```
+
+```{r}
+# step 1, how pivot_wider works
+df |>
+  distinct(measurement) |>
+  pull() # converts the column extracted into a vector, like $ but nicer
+```
+
+```{r}
+# step 2, how pivot_wider works
+df |>
+  select(-measurement, - value) |>
+  distinct()
+```
+
+```{r}
+# step 3, how pivot_wider works
+df |>
+  select(-measurement, - value) |>
+  distinct() |>
+  mutate(x = NA, y = NA, z = NA)
+```
+
+```{r}
+# step 4, how pivot wider works
+# not demonstrated, but cols get filled in based on values from
+```
+
+Note: if multiple rows in input correspond to one cell in output, then list cols get created (columns where their entries contain a list of values instead of a single value)
+
+```{r}
+df <- tribble(
+  ~id, ~measurement, ~value,
+  "A",        "bp1",    100,
+  "A",        "bp1",    102, # 2 replicates for bp1
+  "B",        "bp1",    140,
+  "B",        "bp2",    115,
+  "A",        "bp2",    120,
+  "A",        "bp3",    105,
+)
+
+df |> pivot_wider(
+  names_from = measurement,
+  values_from = value
+)
+```
+
+```{r}
+df |>
+  dplyr::summarise(n = dplyr::n(), .by = c(id, measurement)) |>
+  dplyr::filter(n > 1L)
+```
+
+## 5.5 Summary
+
+Look at the book!

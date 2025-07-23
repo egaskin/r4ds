@@ -1,0 +1,115 @@
+---
+title: "4-style"
+format: html
+editor: visual
+---
+
+# Summary
+
+-   styler package offers quick styling of unstylish code
+
+-   `install.packages("styler")`then Cmd/Ctrl + Shift + P, then type “styler” to see all the shortcuts offered by styler.
+
+-   naming:
+
+    -   use \_, not camelcase to separate words within name
+    -   use long descriptive names, trying to maintain consistent prefixes where applicable
+
+-   spacing:
+
+    -   one space each side mathematical/boolean operators `+`,`-`,`==`,`<`,`...` (except `^`), assignment operator `<-`/`=`, and before pipe `|>`
+
+    -   no spaces around `^`,
+
+    -   no spaces inside/outside parentheses
+
+    -   space right after commas
+
+    -   okay to add spaces so variables align for multi-line assignments, for ex:
+
+        ```{r}
+        flights |> 
+          mutate(
+            speed      = distance / air_time,
+            dep_hour   = dep_time %/% 100,
+            dep_minute = dep_time %%  100
+          )
+        ```
+
+-   pipes (`|>`):
+
+    -   last thing on the line
+
+    -   one space before
+
+    -   if function piping into has named arguments, each arg should go on new line
+
+    -   if func piping into doesn't have named args, keep everything on one line unless doesn't fit, otherwise put each arg on it's own line
+
+        -   if args are getting their own line:
+            -   indent an additional two spaces
+            -   make closing parenthesis match the start of the calling func's name
+
+    -   after first step of pipeline, indent everything two spaces (one `TAB`?)
+
+    -   keep pipelines 10-15 lines max, saving and renaming usefully after hitting max
+
+    -   example:
+
+        ```{r}
+        # Strive for 
+        flights |>  
+          group_by(tailnum) |> 
+          summarize(
+            delay = mean(arr_delay, na.rm = TRUE),
+            n = n()
+          )
+
+        # Avoid
+        flights|>
+          group_by(tailnum) |> 
+          summarize(
+                     delay = mean(arr_delay, na.rm = TRUE), 
+                     n = n()
+                   )
+
+        # Avoid
+        flights|>
+          group_by(tailnum) |> 
+          summarize(
+          delay = mean(arr_delay, na.rm = TRUE), 
+          n = n()
+          )
+        ```
+
+-   ggplot2 conventions same as pipe
+
+# 4.6 Exercise
+
+```{r}
+library(nycflights13)
+library(tidyverse)
+
+flights |>
+  filter(dest == "IAH") |>
+  group_by(year,month,day) |>
+  summarize(
+    n = n(),
+    delay = mean(arr_delay, na.rm = TRUE)
+  ) |>
+  filter(n > 10)
+
+flights |> 
+  filter(
+    carrier == "UA",
+    dest %in% c("IAH","HOU"),
+    sched_dep_time > 0900,
+    sched_arr_time < 2000
+  ) |>
+  group_by(flight) |> 
+  summarize(
+    delay = mean(arr_delay,na.rm=TRUE),
+    cancelled = sum(is.na(arr_delay)), n = n()
+  ) |> 
+  filter(n > 10)
+```

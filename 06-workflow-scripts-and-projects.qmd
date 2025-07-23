@@ -1,0 +1,206 @@
+---
+title: "6-workflow-scripts-and-projects"
+format: html
+editor: visual
+---
+
+## 6.1 Scripts
+
+-   New R script: Cmd/Ctrl + Shift + N
+
+### 6.1.1 Running code
+
+-   Run current line of code: Cmd/Ctrl + Enter
+    -   runs upstream of line if lines are connected
+-   Run whole script: Cmd/Ctrl + Shift + S
+-   **Comment out `install.packages` in your script, so if shared, people don't unintentionally install packages upon running your script**
+
+### 6.1.2 RStudio help
+
+### 6.1.3 Saving and naming
+
+File names should be:
+
+1.  Machine readable: avoid spaces, symbols, special characters, and case sensitivity for naming/distinguishing files.
+2.  Human readable use descriptive but concise names (put some thought into naming!)
+3.  Work well with default ordering - start with numbers with leading zeros (so alphabetical ordering puts them in order!)
+
+#### bad example
+
+Bad example: the names are inconsistent and break rules above.
+
+```         
+alternative model.R
+code for exploratory analysis.r
+finalreport.qmd
+FinalReport.qmd # dont use final. date the file instead!
+fig 1.png
+Figure_02.png
+model_first_try.R
+run-first.r
+temp.txt
+```
+
+#### good example, small
+
+Good example, for small directories:
+
+```         
+project_name/
+  01_load_data.R
+  02_exploratory_data_analysis.R
+  03_model_approach_1.R
+  04_model_approach_2.R
+  fig_01.png
+  fig_02.png
+  report_2022_03_20.qmd
+  report_2022_04_02.qmd
+  report_draft_notes.txt # better than temp!
+  README.md # describe what you did, try to be concise but ensure reproducibility
+```
+
+#### 🌟 good example, medium/large, for my work
+
+Good example for bioinformatics projects adapted from computational biology paper mentioned below
+
+```         
+project_name/
+  .rProj.user/
+  csvs/
+  data/
+    2025_07_21_raw_fastq/
+    2025_07_24_raw_fastq/
+  plots/
+  results/
+    2025_07_22_DEG/
+      01_post_qc/
+      02_dedup/
+      03_bowtie/
+      04_deseq2/
+      driver_script.qmd
+    2025_07_26_DEG/
+    2025_07_30_pathway/
+  scripts/
+    01_script_name.R
+    02_script_name.R
+    03_script_name.R
+  .Rprofile
+  README.md
+```
+- use RStudio projects! these will create `.rProj.user/` and `.Rprofile`
+-   `project_name/README.md` detailed steps of all steps you took, and why. more verbose and explanatory than comments in code
+-   `project_name/data/2025_07_24_raw_data/` example: something wrong with original data, had to redownload
+-   `project_name/results/2025_07_22_DEG/` for NGS data, something like this directory will be common
+-   `project_name/results/driver_script.qmd` you can generate ALL results a subdirectory of `results` folder by just running this one file (avoid manual input/editing at all costs). be careful using R's source() function to call R scripts, see "creating clean driver code - chatGPT" below
+
+#### good example, pure computational biology projects
+
+Good example, for computational biology-esque experiments, based on "A Quick Guide to Organizing Computational Biology Projects" by William Stafford Noble
+
+```         
+project_name/
+  README.md
+  bin/
+    01_script
+    02_script
+    03_script_name.py
+  data/
+    2022_01_07_dataset/
+      01_dataset.csv
+      01_dataset_meta.txt
+      README.md
+    2022_02_15_dataset/
+      02_dataset.csv
+      02_dataset_meta.txt
+      README.md
+  doc/
+    01_script_name.md
+    02_script_name.md
+    03_script_name.md
+    2022-04-02-paper/
+      makefile.sh
+      project_name.tex
+      project_name.pdf
+  results/
+    2022_01_15_experiment_name/
+      split1/
+      split2/
+      split3/
+      runall.sh
+      summarize.sh
+    2022_01_21_experiment_name/
+      runall.sh
+  src/
+    makefile.sh
+    01_script_name.c
+    02_script_name.c
+```
+
+-   `doc` for documenting code scripts and paper manuscripts
+
+    -   `doc/01_script_name.md` or 01_script_name.html depending on how hard you need to go for documenting
+
+-   `project_name/2022-04-02-paper/makefile.sh` quick guide doesn't have a file extension, but i assume most will be .sh
+
+-   `project_name/data/` for storing fixed datasets
+
+    -   `project_name/data/2022_01_07_dataset/README.md` describes where dataset is from, when it was retrieved, and who downloaded it
+
+-   `project_name/src` for storing uncompiled code/scripts. if you don't code in uncompiled langauges, then just use "scripts/"
+
+-   `project_name/bin` for storing binaries of compiled code/scripts
+
+-   `project_name/results/` for storing (1) "driver code" for computational experiments ran on data (MOST IMP THAT A "CLEAN" RUN PRODUCES EXACT SAME RESULTS), (2) results of said driver code
+
+    -   `project_name/results/2022_01_15_experiment_name/runall.sh` this is a driver script.
+    -   `project_name/results/2022_01_15_experiment_name/summarize.sh` called at end of respective `runall.sh` to summarize results of experiment
+
+#### additional resources for organizing projects
+
+-   [how to run python scripts from python scripts](https://stackoverflow.com/questions/7974849/how-can-i-make-one-python-file-run-another)
+
+    -   say you want to import fileB.py into fileA.py. assuming the files are in the same directory, inside fileA you'd write any of the following as needed:
+        -   `from fileB import function_name` then `function_name`
+        -   `import fileB_long_freaking_name as short_name` then `short_name.name_of_your_func()`
+        -   `import fileB` then `fileB.name_of_your_func()`
+
+-   [how to run R scripts from R scripts](https://stackoverflow.com/questions/25273166/combine-and-run-multiple-r-scripts-from-another-script)
+
+    ```         
+    if(condition==X){
+      source("path/to/myscript_A.R")
+    }else{
+        source("path/to/myscript_B.R")
+    }
+    ```
+
+-   [creating clean driver code - chatGPT](https://chatgpt.com/share/687edf2e-ff24-800d-9b1c-46bf971a74d8)
+
+## 6.2 Projects
+
+Handling real life projects (sometimes many simultaneously) requires answering two questions: 1. What is the source of truth? What will you save as your lasting record of what happened? 2. Where does your analysis live?
+
+### 6.2.1 What is the source of truth?
+
+-   don't save your truth in the R environment (like an .RData or, worse, the R terminal)
+-   save the calculation process in the code = reproducible. goal: anyone can regenerate the results by downloading your project/directory and getting the correct libraries (with right versions)
+- use these RStudio options to force yourself to make your code reproducible:
+  ![reproducible-code](https://r4ds.hadley.nz/diagrams/rstudio/clean-slate.png)
+  - found in RStudio "Tools > Global Options"
+- regularly run these shortcuts to clear the session:
+  1. `Press Cmd/Ctrl + Shift + 0/F10` to restart R
+  2. `Cmd/Ctrl + Shift + S` re-run current script
+- **IMPORTANT NOTE** RStudio server is even worse, R session is never restarted by default. If you simply quit, it stays running until you log into the server again - must be careful to regularly restart it!
+
+### 6.2.2 Where does your analysis live?
+
+- current working directory determines what the script has access to
+- `setwd("/path/to/my/CoolProject")` is **NOT** the best way to manage a project, see next session
+
+### 6.2.3 RStudio projects
+- RStudio's recommended way of packaging R code into a single directory
+- "File > New Project" and carefully choose a parent directory for this new directory
+- `getwd() # check current working directory`
+
+### 6.2.4 Relative and absolute paths
+- never use absolute paths for reproducible code! use relative paths! (unfortunately i think this may not work very well for submitting a slurm script easily)
