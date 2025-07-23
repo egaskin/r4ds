@@ -954,8 +954,7 @@ ggplot(flights,aes(x = dep_time, y = arr_delay, color = origin))+
   geom_point()
 ```
 
-4.  What happens if you supply a negative n to slice_min() and friends? 
-Answer: `slice_min(group_by(temp,col_2),col_1,n=2)` – pipe equivalent `temp |> group_by(col_2) |> slice_min(col_1,n=2)` – means get first 2 rows whose value is minimum in col_1 for each group when grouping by col_2. Documentation from ?slice_min, explains `n < 0` will get \# of rows equal to num_rows minus n (as if n were positive) that are minimum in col_1 when grouping by col_2. See example below.
+4.  What happens if you supply a negative n to slice_min() and friends? Answer: `slice_min(group_by(temp,col_2),col_1,n=2)` – pipe equivalent `temp |> group_by(col_2) |> slice_min(col_1,n=2)` – means get first 2 rows whose value is minimum in col_1 for each group when grouping by col_2. Documentation from ?slice_min, explains `n < 0` will get \# of rows equal to num_rows minus n (as if n were positive) that are minimum in col_1 when grouping by col_2. See example below.
 
 ```{r}
 temp <- tibble(col_1=1:10,col_2=c(rep("a",5),rep("b",5)))
@@ -968,8 +967,7 @@ temp |> group_by(col_2) |> slice_min(col_1,n=-2)
 
 ```
 
-5.  Explain what `count()` does in terms of the dplyr verbs you just learned. What does the sort argument to `count()` do? 
-Answer: `count()`counts unique values when grouping by one or more variables. It's mathematically equivalent to `temp |> group_by(col_1,col_2) |> summarize(n=n())`. The sort argument sorts by the value of n
+5.  Explain what `count()` does in terms of the dplyr verbs you just learned. What does the sort argument to `count()` do? Answer: `count()`counts unique values when grouping by one or more variables. It's mathematically equivalent to `temp |> group_by(col_1,col_2) |> summarize(n=n())`. The sort argument sorts by the value of n
 
 ```{r}
 temp <- tibble(col_1=1:10,
@@ -990,47 +988,39 @@ df <- tibble(
 )
 ```
 
-a.  Write down what you think the output will look like, then check if you were correct, and describe what `group_by()` does. 
-Answer: I think `group_by()` will make two groups, one for rows where column y is "a" and one for rows where column y is "b". It will create a grouped dataframe that looks exactly like `df` except it now has the attribute $groups, which contains the grouping y, as indicated by "Groups:   y [2]" when you run the following.
+a.  Write down what you think the output will look like, then check if you were correct, and describe what `group_by()` does. Answer: I think `group_by()` will make two groups, one for rows where column y is "a" and one for rows where column y is "b". It will create a grouped dataframe that looks exactly like `df` except it now has the attribute \$groups, which contains the grouping y, as indicated by "Groups: y \[2\]" when you run the following.
 
 ```{r}
 df |>
   group_by(y)
 ```
-b. Write down what you think the output will look like, then check if you were correct, and describe what `arrange()` does. Also, comment on how it’s different from the `group_by()` in part (a).
-Answer: I think `arrange()` will order the rows of `df` alphabetically by the column `y`. So rows 1,3,4 will be first followed by rows 2,5 when you run the following code.
+
+b.  Write down what you think the output will look like, then check if you were correct, and describe what `arrange()` does. Also, comment on how it’s different from the `group_by()` in part (a). Answer: I think `arrange()` will order the rows of `df` alphabetically by the column `y`. So rows 1,3,4 will be first followed by rows 2,5 when you run the following code.
 
 ```{r}
 df |>
   arrange(y)
 ```
-c. Write down what you think the output will look like, then check if you were correct, and describe what the pipeline does.
 
-*WRONG* Answer: The output will look like a dataframe with two rows and one column like the following:
-2.66667
-3.5
+c.  Write down what you think the output will look like, then check if you were correct, and describe what the pipeline does.
 
-*CORRECT* Answer: The output will be a tibble dataframe with 2 rows and two columns. The first column will be the grouping variable (y), the second column will be the summary statistic calculated for the other input variable (x) after grouping on the grouping variable (y), which we dubbed mean_x. The dataframe will look like this when running the following (omitting the datatype of the columns):
-    y   mean_x
-1   a   2.66667
-2   b   3.5
+*WRONG* Answer: The output will look like a dataframe with two rows and one column like the following: 2.66667 3.5
 
-8/3 = (1+3+4)/3, for group y=a
-(1+3+4)/3 = 
+*CORRECT* Answer: The output will be a tibble dataframe with 2 rows and two columns. The first column will be the grouping variable (y), the second column will be the summary statistic calculated for the other input variable (x) after grouping on the grouping variable (y), which we dubbed mean_x. The dataframe will look like this when running the following (omitting the datatype of the columns): y mean_x 1 a 2.66667 2 b 3.5
+
+8/3 = (1+3+4)/3, for group y=a (1+3+4)/3 =
 
 ```{r}
 df |>
   group_by(y) |>
   summarize(mean_x = mean(x))
 ```
-d. Write down what you think the output will look like, then check if you were correct, and describe what the pipeline does. Then, comment on what the message says.
 
-*WRONG* Answer: This will be the same as c, since the `.groups` argument was not specified so the 2nd grouping variable will be ignored. 
+d.  Write down what you think the output will look like, then check if you were correct, and describe what the pipeline does. Then, comment on what the message says.
 
-*CORRECT* Answer: I misunderstood what the chapter means when it says "each summary peels off the last group". This just means that the groups attribute of the output will not have z anymore. Therefore, the dataframe will group by the combination y and z, creating 3 groups, then summarizing the mean of x for all 3 groups, looking like:
-a K 1
-b K 3.5 # 3.5 comes from (2+5)/2
-a L 3.5 # 3.5 comes from (3+4)/2
+*WRONG* Answer: This will be the same as c, since the `.groups` argument was not specified so the 2nd grouping variable will be ignored.
+
+*CORRECT* Answer: I misunderstood what the chapter means when it says "each summary peels off the last group". This just means that the groups attribute of the output will not have z anymore. Therefore, the dataframe will group by the combination y and z, creating 3 groups, then summarizing the mean of x for all 3 groups, looking like: a K 1 b K 3.5 \# 3.5 comes from (2+5)/2 a L 3.5 \# 3.5 comes from (3+4)/2
 
 ```{r}
 df |>
@@ -1038,7 +1028,7 @@ df |>
   summarize(mean_x = mean(x))
 ```
 
-e. Write down what you think the output will look like, then check if you were correct, and describe what the pipeline does. How is the output different from the one in part (d)?
+e.  Write down what you think the output will look like, then check if you were correct, and describe what the pipeline does. How is the output different from the one in part (d)?
 
 *WRONG* Answer: The same as part d, except now there is the multi group y,z instead of just a group y.
 
@@ -1055,15 +1045,15 @@ df |>
 #   summarize(mean_x = mean(x), .groups = "keep")
 ```
 
-f. Write down what you think the outputs will look like, then check if you were correct, and describe what each pipeline does. How are the outputs of the two pipelines different?
+f.  Write down what you think the outputs will look like, then check if you were correct, and describe what each pipeline does. How are the outputs of the two pipelines different?
 
-*HALF WRONG* Answer: 
+*HALF WRONG* Answer:
 
 The first pipeline's 1st step creates a grouped dataframe on y and z. Then it summarizes the x value of the grouped dataframe's 3 groups. There will be 1 group left in the output dataframe because of summarizes() wonky group peeling.
 
 The second pipeline 1st creates a grouped dataframe on y,z. Then it adds a new column called "mean(x)" to the grouped dataframe that is the mean of each row in the grouped dataframe. The mean of a single value will be that value, therefore it just adds a column called mean_x that has same value as x. There will be 2 groups left in the output dataframe, because mutate does not affect the groups of the input dataframe.
 
-*CORRECT* Answer: 
+*CORRECT* Answer:
 
 See above for first pipeline, this is correct.
 
@@ -1078,12 +1068,10 @@ df |>
   group_by(y, z) |>
   mutate(mean_x = mean(x))
 ```
+
 # 3.6 Don't use mere averages to measure performance
 
-Using baseball batting dataset from Lahman, `Lahman::Batting`
-- H = num hits
-- AB = attempted bats (at bats)
-- we compute the hit percentage of each player
+Using baseball batting dataset from Lahman, `Lahman::Batting` - H = num hits - AB = attempted bats (at bats) - we compute the hit percentage of each player
 
 ```{r}
 batters <- Lahman::Batting |> 
@@ -1095,9 +1083,7 @@ batters <- Lahman::Batting |>
 batters
 ```
 
-Two key takeways, see plot below:
-1. LAW OF LARGE NUMBERS: Variation in `performance` is larger among players with fewer AB. Plot is characteristic of a general truth: if you plot a summary statistics vs group size, variation decreases as sample size increases.
-2. `performance` (skill) is positively correlated with opporunities to hit the ball, `n`, since teams want their best batters to have more chances to hit the ball
+Two key takeways, see plot below: 1. LAW OF LARGE NUMBERS: Variation in `performance` is larger among players with fewer AB. Plot is characteristic of a general truth: if you plot a summary statistics vs group size, variation decreases as sample size increases. 2. `performance` (skill) is positively correlated with opporunities to hit the ball, `n`, since teams want their best batters to have more chances to hit the ball
 
 ```{r}
 batters |> 
@@ -1107,12 +1093,12 @@ batters |>
   geom_smooth(se = FALSE)
 ```
 
-Notice the idiom piping |> into ggplot, then switching to adding layers to plot with +
+Notice the idiom piping \|\> into ggplot, then switching to adding layers to plot with +
 
 *Big takeway* ranking by a mere average doesn't necessarily result in getting the best players - sometimes those who attempted once and hit once, then "went out on top" will have a false "100% average AB". See resources below for solving this problem:
-- http://varianceexplained.org/r/empirical_bayes_baseball/  
-- https://www.evanmiller.org/how-not-to-sort-by-average-rating.html.
 
+\- http://varianceexplained.org/r/empirical_bayes_baseball/\
+- https://www.evanmiller.org/how-not-to-sort-by-average-rating.html.
 
 # Resources
 
