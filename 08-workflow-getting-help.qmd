@@ -1,0 +1,42 @@
+---
+title: "08-workflow-getting-help"
+format: html
+editor: visual
+---
+
+# 8 Workflow: getting help
+
+## 8.1 Google is your friend
+- google specific packages or error messages, adding "in R" as needed
+- stack overflow is great, look for tags [R]
+
+# 8.2 Make a reprex
+reprex = reproducible example, two steps:
+1. make code rpeproducible. capture all needed libraries and (subsetted) objects
+2. make code minimal. strip away everything unrelated to problem. often, subset the object to a small example
+
+R has a package `reprex` to help (which comes with tidyverse):
+
+```{r}
+y <- 1:4
+mean(y)
+```
+
+
+```{r}
+reprex::reprex() # AUTO copied to clipboard!
+```
+### output of reprex by pasting from clipboard
+  
+``` r
+y <- 1:4
+mean(y)
+#> [1] 2.5
+```
+
+<sup>Created on 2025-07-30 with [reprex v2.1.1](https://reprex.tidyverse.org)</sup>
+
+## 8.3 investing in yourself
+learn a little bit of R daily. here's some good resources:
+- https://www.tidyverse.org/blog/
+- https://rweekly.org/
