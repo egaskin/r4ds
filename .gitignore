@@ -1,4 +1,4 @@
-# Ignore RStudio project files
+# ignore RStudio project files
 # git rm -r --cached ".Rproj/" # since they were present before ignoring
 .Rproj.user/
 .Rdata
@@ -6,16 +6,19 @@
 .Rprofile
 r4ds.Rproj
 
-# Ignore renv-related files
+# ignore renv-related files
 renv/
 renv.lock
 
-# Ignore all qmd generated folders, which start 
+# ignore all qmd generated folders, which start 
 # with a number and then end in "_files" (e.g., 
 # 3-data-transformation_files/)
 [0-9]*_files/
-# Ignore qmd generated files
+# ignore qmd generated files
 [0-9]*.html
 
 # ignore my local archive
 archive/
+
+# ignore data folder
+data/

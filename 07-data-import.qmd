@@ -7,6 +7,7 @@ editor: visual
 # Data Import
 
 ## 7.1 Introduction
+
 Use `readr` package to load flat files in R.
 
 ```{r}
@@ -14,3 +15,467 @@ library(tidyverse)
 ```
 
 ## 7.2 Reading data from a file
+
+commonly, data is stored as a csv
+
+```{r}
+students <- read_csv("./data/students.csv")
+```
+
+#### 7.2.1 Practical advice
+
+reading in the data typically is followed by 1. peak with `View()`/`print()` if data is small enough, or with with `head()` 2. transformation to make it easier for analysis later
+
+We can see from this that there are character strings "N/A" but R does not recognize this as NA.`read_csv()` by default only converts \`\` and "NA" to NA, but we can change this
+
+```{r}
+students <- read_csv('data/students.csv', na = c("", "NA", "N/A"))
+students
+print(students)
+students |> head()
+```
+
+In a qmd document, you can't see it but if you run `print(students)` or `students` in the R console, you will see `` `Student ID` `` - this is because the student ID and full name columns have spaces
+
+```{r}
+students |> 
+  rename(
+    student_id = `Student ID`,
+    full_name = `Full Name`
+  )
+```
+
+```{r}
+students |> janitor::clean_names() # heuristically fixes as many as possible!
+```
+
+common to fix types of loaded data too. variables that have a subinfinite set of discrete values to choose from are often better represented as factors in R
+
+```{r}
+students |>
+  janitor::clean_names() |>
+  mutate(meal_plan = factor(meal_plan)) 
+```
+
+age column was coerced to all chr because on entry is "five", let's fix that
+
+```{r}
+# students <- students |>
+students |>
+  janitor::clean_names() |>
+  mutate(
+    meal_plan = factor(meal_plan),
+    age = parse_number(if_else(age == "five", "5", age)),
+  ) 
+```
+
+### 7.2.2 Other arguments for data reading funcs
+
+Small trick. `read_csv` can read strings formatted like csvs!
+
+```{r}
+dummy_csv <- read_csv(
+  "a,b,c
+  1,2,3
+  4,5,6"
+)
+dummy_csv
+```
+
+multiple header rows, use `skip` or `comment`
+
+```{r}
+dummy_csv <- read_csv(
+  "The first line of metadata
+  The second line of metadata
+  a,b,c
+  1,2,3
+  4,5,6",
+  skip = 2
+)
+dummy_csv
+
+dummy_csv <- read_csv(
+  "# The first line of metadata
+  # The second line of metadata
+  a,b,c
+  1,2,3
+  4,5,6",
+  comment = "#"
+)
+dummy_csv
+```
+
+no header row `col_names = FALSE` or give it a header `col_names = c("a", "b", "c", ...)`
+
+```{r}
+dummy_csv <- read_csv(
+  "1,2,3
+  4,5,6",
+  col_names = FALSE
+)
+dummy_csv
+
+dummy_csv <- read_csv(
+  "1,2,3
+  4,5,6",
+  col_names = c("a", "b", "c")
+)
+dummy_csv
+```
+
+There are many more arguments for `read_csv()` but these cover most use cases. If your csv is more complicated, carefully scrutinize the csv and read `read_csv()` documentation
+
+### 7.2.3 Other (rectangular) file types
+
+-   `read_csv()` = comma separated values
+-   `read_csv()` = semicolon delimited
+-   `read_tsv()` = tab-delimited
+-   `read_delim()` = any delimiter, `None` = try to guess
+-   `read_fwf()` = fixed width files, specify width `fwf_widths()` or positions `fwf_positions()`
+-   `read_table()` = common variation of fixed-width files where columns are separated by white space
+-   `read_log()` = reads Apache-style log files
+
+### 7.2.4 Exercises
+
+1.  
+
+-   answer: to read a file delimited by `|` i would use `read_delim()`
+
+2.  
+
+-   answer: using `?read_csv` brings up all the read funcs, I've indicared and counted the shared ones below, skipping `file`, `skip` and `comment`. They share the exact same set of args, including the ones that were skipped, and the default values of those args!
+
+```         
+read_csv(
+  file, # SKIP
+  col_names = TRUE, # 1
+  col_types = NULL, # 2
+  col_select = NULL, # 3
+  id = NULL, # 4
+  locale = default_locale(), # 5
+  na = c("", "NA"), # 6
+  quoted_na = TRUE, # 7
+  quote = "\"", # 8
+  comment = "", # SKIP
+  trim_ws = TRUE, # 10
+  skip = 0, # SKIP
+  n_max = Inf, # 11
+  guess_max = min(1000, n_max), # 12
+  name_repair = "unique", # 13
+  num_threads = readr_threads(), # 14
+  progress = show_progress(), # 15
+  show_col_types = should_show_types(), # 16
+  skip_empty_rows = TRUE, # 17
+  lazy = should_read_lazy() # 18
+)
+
+read_tsv(
+  file,
+  col_names = TRUE, # 1
+  col_types = NULL, # 2
+  col_select = NULL, # 3
+  id = NULL, # 4
+  locale = default_locale(), # 5
+  na = c("", "NA"), # 6
+  quoted_na = TRUE, # 7
+  quote = "\"", # 8
+  comment = "",
+  trim_ws = TRUE, # 10
+  skip = 0, # SKIP
+  n_max = Inf, # 11
+  guess_max = min(1000, n_max), # 12
+  progress = show_progress(), # 15
+  name_repair = "unique", # 13
+  num_threads = readr_threads(), # 14
+  show_col_types = should_show_types(), # 16
+  skip_empty_rows = TRUE, # 17
+  lazy = should_read_lazy() # 18
+)
+```
+
+3.  
+
+-   answer: `read_fwf` will not work without `file` (there is no default arg for it), and it would probably be good to specify the `col_positions` rather than leaving it up to default, as most fixed width files won't have the same width. But let's look at an example to confirm... The below examples consistently show that the args `file` and `col_positions` are the minimum args specified to get a reasonable "read-in" of the data with `read_fwf()`.
+
+```{r}
+# this is from ?read_fwf
+fwf_sample <- readr_example("fwf-sample.txt")
+writeLines(fwf_sample) 
+```
+
+```{r}
+# You can specify column positions in several ways:
+# 1. Guess based on position of empty columns
+read_fwf(fwf_sample, fwf_empty(fwf_sample, col_names = c("first", "last", "state", "ssn")))
+# 2. A vector of field widths
+read_fwf(fwf_sample, fwf_widths(c(20, 10, 12), c("name", "state", "ssn")))
+# 3. Paired vectors of start and end positions
+read_fwf(fwf_sample, fwf_positions(c(1, 30), c(20, 42), c("name", "ssn")))
+# 4. Named arguments with start and end positions
+read_fwf(fwf_sample, fwf_cols(name = c(1, 20), ssn = c(30, 42)))
+# 5. Named arguments with column widths
+read_fwf(fwf_sample, fwf_cols(name = 20, state = 10, ssn = 12))
+```
+
+4.  
+
+-   answer: See example below. `x,y` are header, `1,'a,b'` are values for respective cols. Essentially, ignore the outermost `"` symbols and let `\n` separate rows from one another
+
+```{r}
+read_csv(
+  "x,y\n1,'a,b'",
+  quote = "'"
+)
+```
+
+5.  
+
+-   answer: see comments and solns in code below. note, the ordered pairs (dataframe_row_idx,dataframe_col_idx) refer to the indices in the dataframe after loading the csv (so *ignoring* the header rows for the row index).
+
+```{r}
+read_csv("a,b\n1,2,3\n4,5,6") # makes tibble missing header and data
+
+# needs a third col header, otherwise all third col data will be left out
+read_csv("a,b,\n1,2,3\n4,5,6")
+
+```
+
+```{r}
+read_csv("a,b,c\n1,2\n1,2,3,4") # makes tibble missing data, 2x3
+
+# is missing a fourth col header, resulting (3,3) being cutoff. note, the missing (1,3) is okay, and will be inferred as NA. the same will happen for (1,4) when 4th header is added.
+ 
+read_csv("a,b,c,\n1,2\n1,2,3,4") # makes tibble using all data, 2x4
+
+```
+
+```{r}
+read_csv("a,b\n\"1") # makes empty tibble, 0 x 2
+
+# has a non-syntactic value \"1 in (1,1). will need to specify the quote arg
+
+# v1, if you DONT want the backslash i.e. do treat as escaping character
+read_csv("a,b\n\"1", quote = "") # makes desired tibble 1x2
+
+# v2.1, if you DO want the backslash, i.e. dont treat as escaping character
+read_csv(I("a,b\n\"1"), quote = "") 
+# note, the first "window" of the output contains regular prints, and subsequent windows have the dfs
+print("---------------------------------------------------------------")
+print(paste0("here's the result if we do $a[1]: ",read_csv(I("a,b\n\"1"), quote = "")$a[1], " which is what we want!"))
+print("---------------------------------------------------------------")
+# v2.2, just to show
+read_csv(I("a,b\n\"1,\"2"), quote = "") # NOTE, THE QUARTO DOESN'T RENDER IT CORRECTLY, COPY or CTRL+Enter to run in R console
+
+```
+
+```{r}
+read_csv("a,b\n1,2\na,b") # this seems fine. it should render as a 2x2
+
+```
+
+```{r}
+read_csv("a;b\n1;3")
+
+```
+
+6.  
+
+-   answer:
+
+```{r}
+annoying <- tibble(
+  `1` = 1:10,
+  `2` = `1` * 2 + rnorm(length(`1`))
+)
+```
+
+```{r}
+# part a
+annoying$`1`
+
+annoying |> pull(`1`)
+```
+
+```{r}
+# part b
+ggplot(
+  data = annoying,
+  mapping = aes(`1`, `2`)
+) + 
+  geom_point()
+```
+
+```{r}
+# part c
+annoying <- annoying |>
+  mutate(`3` = `2`/`1`)
+annoying
+```
+
+```{r}
+annoying <- annoying |>
+  rename(
+    one = `1`,
+    two = `2`,
+    three = `3`,
+  )
+annoying
+```
+
+## 7.3 Controlling column types
+
+-   csv files dont typically contain metadata about the var type, so you have to specify the types or readr will have to infer the types
+
+### 7.3.1 Guessing types
+
+readr uses a simplistic 4 step processes to guess types, which often fails in practice unless dataset is clean already (see r4ds book for this)
+
+### 7.3.2 Missing values, column types, and problems
+
+```{r}
+simple_csv <- "
+  x
+  10
+  .
+  20
+  30"
+
+read_csv(simple_csv) # results in chr column
+```
+
+#### v1, detect bad vals
+
+detect bad vals by letting `read_csv()` make coercion mistakes, attempting to make column types work with `col_types` then use `problems(df)` if anything goes wrong (see `read_csv` output)
+
+```{r}
+df <- read_csv(
+  simple_csv, 
+  col_types = list(x = col_double())
+)
+
+df
+```
+
+```{r}
+problems(df)
+```
+
+The above shows that in row 3, col 1, `read_csv()` expected a double but got `.`, so maybe we should treat periods as `NA`
+
+```{r}
+read_csv(simple_csv, na = ".")
+```
+
+### 7.3.3 column types
+
+`readr` provides nine column types for users - `col_logical()`: logicals (rare) - `col_double()`: doubles (rare) - `col_character()`: strings (moderate) - useful if a numeric looking variable should NOT have numerical ops applied, for example: phone numbers - `col_factor()`: factors - `col_date()`: dates - `col_datetime()`: date times - learn about above 3 in Chapters 16 and 17 - `col_number()`: permissive numeric parser that ignores characters to extract numeric vals - particularly useful for currencies - see chapter 13 - `col_skip()`: skips reading cols in this arg
+
+useful to override default column type by switching from `list()` to `cols()`
+
+```{r}
+another_csv <- "
+x,y,z
+1,2,3"
+
+# doubles!
+read_csv(
+  another_csv
+)
+
+# characters!
+read_csv(
+  another_csv, 
+  col_types = cols(.default = col_character())
+)
+
+```
+
+Useful to use `cols_only()` which will read in only columns you specify
+
+```{r}
+read_csv(
+  another_csv,
+  col_types = cols_only(x = col_character(), y = col_number())
+)
+```
+
+## 7.4 Reading data from multiple files
+
+if your data is spread across multiple csvs:
+
+```{r}
+sales_files <- c("data/01-sales.csv", "data/02-sales.csv", "data/03-sales.csv")
+read_csv(sales_files, id = "file")
+```
+
+-   files available at:
+    -   https://pos.it/r4ds-01-sales
+    -   https://pos.it/r4ds-02-sales
+    -   https://pos.it/r4ds-03-sales
+-   the file arg creates a col saying where the files came from
+
+read directly from the internet
+
+```{r}
+sales_files <- c(
+  "https://pos.it/r4ds-01-sales",
+  "https://pos.it/r4ds-02-sales",
+  "https://pos.it/r4ds-03-sales"
+)
+read_csv(sales_files, id = "file")
+```
+
+if you have LOTS of files, then use regex with `list.files()` to read them in
+
+```{r}
+sales_files <- list.files("data", pattern = "sales\\.csv$", full.names = TRUE)
+sales_files
+```
+
+## writing to a file
+
+-   two useful functions for writing data back to disk: `write_csv()` and `write_csv()`
+    -   most important args are `x` (data frame to save) and `file` (location to save it)
+    -   can also use `na` to specify how missing values are written
+
+```{r}
+students
+
+write_csv(students, "./data/students_test.csv")
+
+read_csv("./data/students_test.csv")
+```
+
+**notice** when writing to then reading csv, you lose the col type info you specified before writing. this makes csvs annoying for storing interim results. alternatives: 1. `write_rds()` and `read_rds()` - get exact same R objects you had originally 2. `arrow` package to write parquet files. a faat binary format that can be shared across programming languages - **Parquet tends to be much faster than RDS and is usable outside of R, but does require the arrow package.**
+
+```{r}
+library(arrow)
+write_parquet(students, "./data/students.parquet")
+read_parquet("./data/students.parquet")
+```
+
+## 7.6 data entry
+
+creating tibbles by hand.
+
+`tibble()` works by column
+
+```{r}
+tibble(
+  x = c(1, 2, 5), # this is a col
+  y = c("h", "m", "g"),
+  z = c(0.08, 0.83, 0.60)
+)
+```
+
+`tribble()` works by row (**tr**ansposed t**ibble**), nice to see the relationship between rows
+
+```{r}
+tribble(
+  ~x, ~y, ~z,
+  1, "h", 0.08, # this is a row
+  2, "m", 0.83, # this is a row
+  5, "g", 0.60
+)
+```
