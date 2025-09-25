@@ -1,0 +1,336 @@
+---
+title: "09-visualize-layers"
+format: html
+editor: visual
+---
+
+# 9 Layers
+
+In chap 9 "Layers" you will learn about the layered grammar of graphics in R.
+
+In chap 10 "Exploratory data analysis", you’ll combine visualization with your curiosity and skepticism to ask and answer interesting questions about data.
+
+Finally, in chap 11 "Communication" you will learn how to take your exploratory graphics, elevate them, and turn them into expository graphics, graphics that help the newcomer to your analysis understand what’s going on as quickly and easily as possible.
+
+BEST PLACE to learn ggplot2 visuals? [ggplot2: elegant graphics for data analysis](https://ggplot2-book.org/)
+
+What if you're trying to do something unique/difficult with ggplot2? https://exts.ggplot2.tidyverse.org/gallery/
+
+## 9.1 Introduction
+
+### 9.1.1 prerequisites
+
+```{r}
+library(tidyverse)
+sessionInfo()
+```
+
+## 9.2 Aesthetic mappings
+
+```{r}
+mpg
+```
+
+visualize relationship between `displ` (engine size) and `hwy` (highway mpg) for various `class`es of car
+
+```{r}
+ggplot(mpg, aes(x = displ, y = hwy, color = class)) +
+  geom_point()
+
+ggplot(mpg, aes(x = displ, y= hwy, shape = class)) +
+  geom_point()
+
+#> Warning: The shape palette can deal with a maximum of 6 discrete values because more
+#> than 6 becomes difficult to discriminate
+#> ℹ you have requested 7 values. Consider specifying shapes manually if you
+#>   need that many of them.
+#> Warning: Removed 62 rows containing missing values or values outside the scale range
+#> (`geom_point()`).
+```
+
+the warnings for the plot above indicate:
+
+1.  62 rows were removed because of missing vals or vals outside geom_point() scale range
+
+2.  default shape pallete deals with a max of 6 shapes, specify manually if we want more
+
+-   both result in data removed and not plotted as result
+
+let's try letting class determine the `size` of points and opacity (`alpha`)
+
+```{r}
+ggplot(mpg, aes(x = displ, y = hwy, size = class)) +
+  geom_point()
+#> Warning: Using size for a discrete variable is not advised.
+
+ggplot(mpg, aes(x = displ, y = hwy, alpha = class)) +
+  geom_point()
+#> Warning: Using alpha for a discrete variable is not advised.
+```
+
+*key idea*: mapping an unordered discrete/categorical var/class to an ordered aesthetic is generally BAD because this implies a ranking that does not exist (why is pickup smaller than a subcompact car or SUV, in the class legend for `size`?)
+
+once aesthetics are mapped, ggplot2 handles everything:
+
+-   auto select reasonable scale to use with aes
+
+-   construct legend explaining mapping between levels and values
+
+-   for x and y aes, dont make legend but create axis line with tick marks and label
+
+    -   axis line provides SAME info as legend: explain mapping between location and value
+
+can use geoms to adjust visual properties unrelated to data (outside the `aes`):
+
+-   `color` as character string or hexadecimal color code
+
+-   `size` of point in mm, e.g. `size = 1`
+
+-   `shape` of point as number, see figure 9.1 below
+
+```{r}
+# make points in plot blue
+ggplot(mpg, aes(x = displ, y = hwy)) +
+  geom_point(color = "blue")
+
+"blue"
+"#f52a27"
+```
+
+![Figure 9.1 R's 26 built-in shapes. note, some are distinguished by color](https://r4ds.hadley.nz/layers_files/figure-html/fig-shapes-1.png)
+
+### 9.2.1 Exercises
+
+1.  Create a scatterplot of `hwy` vs. `displ` where the points are pink filled in triangles.
+
+-   answer:
+
+```{r}
+ggplot(mpg, aes(x = hwy, y = displ)) + 
+  geom_point(shape = 24, fill = "pink")
+  # geom_point(color = "pink", shape = 24, fill = "pink") # completely pink
+```
+
+2.  Why did the following code not result in a plot with blue points?
+
+-   answer: because `color` was passed to the `aes()` of `geom_point()` instead of directly to `geom_point()`. based on the experiments below, im guessing that color passed to the topmost level inside/outside aes doesnt make sense unless we are passing a variable in, since there is not anything to color yet (the `geom_point` doesnt exist yet)
+
+```{r}
+# this doesnt work. the color is overriden by default?
+ggplot(mpg) + 
+  geom_point(aes(x = displ, y = hwy, color = "blue"))
+
+# this works
+ggplot(mpg) + 
+  geom_point(aes(x = displ, y = hwy), color = "blue")
+
+# this works, and is standard
+ggplot(mpg, aes(x = displ, y = hwy)) + 
+  geom_point(color = "blue")
+
+# what if we set the color at the topmost level outside aes()?
+ggplot(mpg, aes(x = displ, y = hwy), color = "blue") + 
+  geom_point()
+
+# what if we set the color at the topmost level inside aes()? answer: huh, it controls the legend label without changing the color.
+ggplot(mpg, aes(x = displ, y = hwy, color = "blue")) + 
+  geom_point()
+
+ggplot(mpg, aes(x = displ, y = hwy, color = cyl)) + 
+  geom_point()
+
+ggplot(mpg, aes(x = displ, y = hwy, color = as.factor(cyl))) + 
+  geom_point()
+```
+
+3.  What does the `stroke` aesthetic do? What shapes does it work with? (Hint: use `?geom_point`)
+
+-   answer: for ggplot2_3.5.2, `stroke` is not documented very well by `?geom_point` nor by the associated vignette `vignette("ggplot2-specs")`. Based on the below, it appears to control width of the marker's border
+
+```{r}
+ggplot(mpg, aes(x = displ, y = hwy)) + 
+  geom_point(stroke = 5, shape = 1)
+
+ggplot(mpg, aes(x = displ, y = hwy)) + 
+  geom_point(stroke = 1, shape = 1)
+
+ggplot(mpg, aes(x = displ, y = hwy)) + 
+  geom_point(shape = 1)
+```
+
+4.  What happens if you map an aesthetic to something other than a variable name, like `aes(color = displ < 5)`? Note, you’ll also need to specify x and y.
+
+-   answer: for a boolean expression, the legend gets split into `FALSE` and `TRUE`. we learned above a static value (like `color = "red"`) will cause the value to be applied globally
+
+```{r}
+# note: unique(mpg$cyl) gives 4, 5, 6, 8
+
+# expression to color
+ggplot(mpg, aes(x = displ, y = hwy, color = cyl > 6)) +
+  geom_point()
+
+# expression to shape
+ggplot(mpg, aes(x = displ, y = hwy, shape = cyl > 6)) +
+  geom_point()
+
+# hard coded colors to color
+selected_colors = sample(
+  x = c("red", "blue", "yellow"), 
+  size = length(mpg$hwy),
+  replace = TRUE
+)
+
+ggplot(mpg, aes(x = displ, y = hwy)) +
+  geom_point(color = selected_colors)
+
+rm(selected_colors)
+```
+
+## 9.3 Geometric objects (geoms)
+
+Two different geoms on the same data and ggplot base
+
+```{r}
+# Left
+ggplot(mpg, aes(x = displ, y = hwy)) + 
+  geom_point()
+
+# Right
+ggplot(mpg, aes(x = displ, y = hwy)) + 
+  geom_smooth()
+#> `geom_smooth()` using method = 'loess' and formula = 'y ~ x'
+```
+
+-   every geom func takes an `aes()` mapping (or inherits from top level `ggplot()`)
+-   but not every `aes()` works with each geom
+    -   if you specify an `aes()` that doesnt work with a geom, it will be silently ignored
+-   `geom_smooth()` will draw different line with different linetype for each unique variable mapped to linetype
+
+```{r}
+# Left - shape is ignored by geom_smooth 
+ggplot(mpg, aes(x = displ, y = hwy, shape = drv)) + 
+  geom_smooth()
+
+# Right - line type is accepted
+ggplot(mpg, aes(x = displ, y = hwy, linetype = drv)) + 
+  geom_smooth()
+```
+
+we can make the plot even clearer by: 
+
+- overlaying lines on respective data 
+- coloring everything by `drv`
+
+```{r}
+ggplot(mpg, aes(x = displ, y = hwy, color = drv)) +
+  geom_point() +
+  geom_smooth(aes(linetype = drv))
+```
+
+-   many `geom`s use single geometric object to display multiple rows from df
+-   can use `aes(group = ...)` to draw multiple objects
+    -   each unique value of grouping var will get a separate object (like the different lines for `drv` above)
+    -   ggplot2 will auto group data for `geom`s whenever `aes` is mapped to discrete var
+        -   this auto produces a legend, whereas `group =` does not
+
+```{r}
+# Left
+ggplot(mpg, aes(x = displ, y = hwy)) +
+  geom_smooth()
+
+# Middle- generates 3 geom_smooth lines, no legend
+ggplot(mpg, aes(x = displ, y = hwy)) +
+  geom_smooth(aes(group = drv))
+
+# Right - generates 3 geom_smooth lines and legend (which can be suppressed), and colors the lines
+ggplot(mpg, aes(x = displ, y = hwy)) +
+  geom_smooth(aes(color = drv), show.legend = FALSE)
+```
+
+-   if mappings placed in geom and not top layer, ggplot2 will use them to extend or overwrite global mappings *for that layer only*
+
+```{r}
+# leave color of line alone, but color the points by `class`
+ggplot(mpg, aes(x = displ, y = hwy)) + 
+  geom_point(aes(color = class)) + 
+  geom_smooth()
+```
+
+-   same idea can be used to specify  different `data` for each layer
+  - example below: red points and open circles to highlight 2-seater cars
+```{r}
+ggplot(mpg, aes(x = displ, y = hwy)) + 
+  geom_point() + 
+  geom_point(
+    data = mpg |> filter(class == "2seater"), 
+    color = "red"
+  ) +
+  geom_point(
+    data = mpg |> filter(class == "2seater"), 
+    shape = "circle open", size = 3, color = "red"
+  )
+```
+
+controlling look of plot by `geom` can reveal different features of data.
+- histogram/density reveals distribution of hwy mileage is bimodal and right skewed
+- boxplot reveals two potential outliers
+```{r}
+# Left
+ggplot(mpg, aes(x = hwy)) +
+  geom_histogram(binwidth = 2)
+
+# Middle
+ggplot(mpg, aes(x = hwy)) +
+  geom_density()
+
+# Right
+ggplot(mpg, aes(x = hwy)) +
+  geom_boxplot()
+```
+
+ggplot2 provides 40 geoms, but there are many many more plots one can make. for some examples, see the extension packages in https://exts.ggplot2.tidyverse.org/gallery/
+
+for example, ridgeline plots for visualizing density of a numerical variable after grouping on a categorical var
+```{r}
+ggplot(mpg, aes(x = hwy, y = drv, fill = drv, color = drv)) +
+  ggridges::geom_density_ridges(alpha = 0.5, show.legend = FALSE)
+#> Picking joint bandwidth of 1.28
+```
+
+*read this to get a comprhensive overview of ggplot2*: https://ggplot2.tidyverse.org/reference/
+
+### 9.3.1 exercises
+1. What geom would you use to draw a line chart? A boxplot? A histogram? An area chart?
+
+- answer: see below
+
+```{r}
+mpg # |> View()
+
+ggplot(mpg, aes(x = year, y = hwy, color = manufacturer)) +
+  geom_smooth()
+
+ggplot(mpg, aes(x = manufacturer, y = hwy)) +
+  geom_boxplot() +
+  theme(axis.text.x = element_text(angle = 90, vjust = 0.5, )) # hjust=1
+
+# just to check the histogram
+mpg |> summarize(n_manufac = n(), .by = manufacturer) # |> View()
+ggplot(mpg, aes(x = manufacturer)) +
+  geom_histogram(stat = "count") + # fails without stat = "count" for categorical variables
+  theme(axis.text.x = element_text(angle = 90, vjust = 0.5, )) # hjust=1
+
+ggplot(mpg, aes(x = year, y = hwy, color = manufacturer)) +
+  geom_area()
+```
+
+2. Earlier in this chapter we used `show.legend` without explaining it. What does `show.legend = FALSE` do here? What happens if you remove it? Why do you think we used it earlier?
+
+```{r}
+ggplot(mpg, aes(x = displ, y = hwy)) +
+  geom_smooth(aes(color = drv), show.legend = FALSE)
+
+ggplot(mpg, aes(x = displ, y = hwy)) +
+  geom_smooth(aes(color = drv))
+```
+
