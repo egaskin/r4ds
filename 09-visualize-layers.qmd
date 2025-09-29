@@ -307,30 +307,88 @@ ggplot(mpg, aes(x = hwy, y = drv, fill = drv, color = drv)) +
 ```{r}
 mpg # |> View()
 
+# line chart
 ggplot(mpg, aes(x = year, y = hwy, color = manufacturer)) +
   geom_smooth()
 
+# boxplot
 ggplot(mpg, aes(x = manufacturer, y = hwy)) +
   geom_boxplot() +
   theme(axis.text.x = element_text(angle = 90, vjust = 0.5, )) # hjust=1
 
+# histogram
 # just to check the histogram
 mpg |> summarize(n_manufac = n(), .by = manufacturer) # |> View()
 ggplot(mpg, aes(x = manufacturer)) +
   geom_histogram(stat = "count") + # fails without stat = "count" for categorical variables
   theme(axis.text.x = element_text(angle = 90, vjust = 0.5, )) # hjust=1
 
+# area chart
 ggplot(mpg, aes(x = year, y = hwy, color = manufacturer)) +
   geom_area()
 ```
 
 2. Earlier in this chapter we used `show.legend` without explaining it. What does `show.legend = FALSE` do here? What happens if you remove it? Why do you think we used it earlier?
 
+Answer: `show.legend` removes the legend from the plot (see example below). they likely removed it earlier because they wanted it to be consistent with the middle and left plots (see the code copied below). other situations where suppressing legend is useful: too many things in the legend, wrapping/patchwork multiple plots together and only need one...
 ```{r}
 ggplot(mpg, aes(x = displ, y = hwy)) +
   geom_smooth(aes(color = drv), show.legend = FALSE)
 
 ggplot(mpg, aes(x = displ, y = hwy)) +
   geom_smooth(aes(color = drv))
+
+# copied code exemplifying show.legend
+# # Right - generates 3 geom_smooth lines and legend (which can be suppressed), and colors the lines
+# ggplot(mpg, aes(x = displ, y = hwy)) +
+#   geom_smooth(aes(color = drv), show.legend = FALSE)
 ```
 
+3. What does the `se` argument to `geom_smooth()` do?
+
+Answer: quoting from `?geom_smooth`:
+  ```
+  se    Display confidence interval around smooth? (TRUE by default, see level to control.)
+  ```
+So `se` calculates some type of confidence interval that the learned statistical model from `geom_smooth`, represented by the curve, has in its predictions?
+
+```{r}
+?geom_smooth
+```
+
+4. Recreate the R code necessary to generate the following graphs. Note that wherever a categorical variable is used in the plot, it’s `drv.`
+
+```{r}
+# plot 1: (1,1)
+ggplot(mpg, aes(x = displ, y = hwy)) + 
+  geom_point() +
+  geom_smooth()
+
+# plot 2: (1,2)
+ggplot(mpg, aes(x = displ, y = hwy)) + 
+  geom_point() +
+  geom_smooth(mapping = aes(group = drv), se = FALSE)
+
+# plot 3: (2,1)
+ggplot(mpg, aes(x = displ, y = hwy, color = drv)) + 
+  geom_point() +
+  geom_smooth(se = FALSE)
+
+# plot 4: (2,2)
+ggplot(mpg, aes(x = displ, y = hwy)) + 
+  geom_point(aes(color = drv)) +
+  geom_smooth(se = FALSE)
+
+# plot 5: (3,1)
+ggplot(mpg, aes(x = displ, y = hwy, color = drv)) + 
+  geom_point() +
+  geom_smooth(aes(linetype = drv), se = FALSE, color = "blue")
+
+# plot 6: (3,2)
+ggplot(mpg, aes(x = displ, y = hwy)) + 
+  geom_point(aes(size = 2), color = "white", show.legend = FALSE) +
+  geom_point(aes(color = drv))
+
+```
+
+## 9.4 Facets
